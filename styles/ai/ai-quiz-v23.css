@@ -1,0 +1,25 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/ai/ai-quiz-v23.css
+ * 役割：ai-quiz-v23画面・機能の補助スタイル
+ * 利用画面：index.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* VETA23 AI会話5問クイズ：スマホ・PC共通。自由会話の画面は従来どおり。 */
+.ai-quiz-panel{width:100%;max-width:710px;margin:0 auto;padding:clamp(15px,3vw,24px);border:2px solid #b8d7e7;border-radius:19px;background:linear-gradient(155deg,#f7fcff,#fffef9);box-shadow:0 8px 20px #19466612}
+.ai-quiz-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;color:#1c5876;font-size:clamp(15px,2.5vw,19px);font-weight:900}
+.ai-quiz-top strong{padding:6px 11px;border-radius:11px;background:#e3f3ff;color:#145478;font-size:14px;white-space:nowrap}
+.ai-quiz-message{padding:12px 15px;border-left:5px solid #288a9e;border-radius:9px;background:#ecf8fc;color:#214e64;font-size:clamp(13px,2.5vw,16px);font-weight:700;line-height:1.75}
+.ai-quiz-panel .ai-response-label{display:block;margin:14px 0 7px;font-weight:900;color:#294859}
+.ai-quiz-input{box-sizing:border-box;width:100%;min-height:58px;padding:12px 15px;font-size:clamp(18px,4vw,23px);color:#1b3649;border:2px solid #84b4c7;border-radius:12px;background:#fff}
+.ai-quiz-input:focus-visible{outline:3px solid #d29b33;outline-offset:2px}
+.ai-quiz-panel .ai-response-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:13px 0}
+.ai-quiz-panel .ai-response-buttons button{flex:1 1 190px;min-height:54px;border-radius:12px;font-weight:900}
+.ai-quiz-feedback{border-radius:12px;line-height:1.75;font-weight:800;overflow-wrap:anywhere}
+.ai-quiz-feedback:not(:empty){padding:12px 15px;border:2px solid #b5c8d6;margin:10px 0}
+.ai-quiz-feedback.is-correct{background:#edfbef;border-color:#63b48d;color:#176342}
+.ai-quiz-feedback.is-wrong{background:#fff5ee;border-color:#dda07e;color:#88441f}
+.ai-quiz-chat-link{display:block;margin:13px auto 0;padding:10px 13px;min-height:44px;border:1px solid #9fb7c5;border-radius:10px;background:#fff;color:#24576f;font:inherit;font-weight:800;cursor:pointer}
+.ai-quiz-chat-link:focus-visible{outline:3px solid #df9c42;outline-offset:2px}
+@media(max-width:520px){.ai-quiz-panel .ai-response-buttons{display:grid;grid-template-columns:1fr}.ai-quiz-panel .ai-response-buttons button{min-height:52px}}

@@ -1,0 +1,31 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/training/training-revision-ver120.css
+ * 役割：training-revision-ver120画面・機能の補助スタイル
+ * 利用画面：index.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* 手拍子・モーラと写字・見写しのPC・小型画面向け表示 */
+.mora-mode-simple { width:100%; max-width:720px; margin:0 auto; box-sizing:border-box; padding:26px 20px; border:1px solid #bfd9c5; border-radius:18px; background:#f3faf5; text-align:center; }
+.mora-mode-simple h2 { color:#1a573b; font-size:clamp(20px,3vw,27px); margin:0 0 10px; }
+.mora-mode-simple p { margin:0 0 18px; color:#42574b; }
+.mora-simple-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.mora-simple-choice { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; min-height:160px; padding:20px 12px; border:2px solid #c7dccc; border-radius:16px; background:white; color:#1b4632; cursor:pointer; transition:border-color .12s, background .12s; }
+.mora-simple-choice:hover,.mora-simple-choice:focus-visible { border-color:#399463; background:#eef9f1; }
+.mora-simple-choice span {font-size:36px;} .mora-simple-choice strong {font-size:23px;} .mora-simple-choice small {font-size:14px; line-height:1.6;}
+.mora-mode-simple .mora-simple-note {font-size:14px; margin:16px 0 0;}
+.tracing-panel { max-width:760px; margin:auto; border:1px solid #d3e3d7; border-radius:18px; padding:20px; background:#f8fcf8; }
+.tracing-guide,.tracing-footnote { color:#4b6153; line-height:1.6; }
+.tracing-word { text-align:center; font-size:clamp(28px,5vw,42px); font-weight:800; letter-spacing:.08em; color:#235a42; padding:6px 0 18px; }
+.tracing-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr)); gap:12px; }
+.tracing-cell { min-width:0; text-align:center; } .tracing-cell-label { font-size:14px; font-weight:700; color:#557661; margin-bottom:5px; }
+.tracing-canvas { display:block; width:100%; max-width:180px; height:auto; aspect-ratio:1; margin:0 auto; background:white; border:2px solid #b1d3be; border-radius:14px; touch-action:none; cursor:crosshair; }
+.tracing-status { min-height:1.8em; margin:18px 0 10px; text-align:center; font-weight:700; color:#286145; }
+.tracing-actions {display:flex; flex-wrap:wrap; gap:12px; justify-content:center;}
+.tracing-actions button { min-height:48px; border-radius:12px; font-weight:800; padding:10px 20px; cursor:pointer;}
+.tracing-reset { background:#fff; color:#326247; border:2px solid #99b9a2; }
+.tracing-finish { background:#258457; color:white; border:2px solid #258457; }
+.tracing-actions button:disabled { opacity:.6;cursor:default; }
+.tracing-footnote {font-size:13px; margin:15px 0 0;}
+@media (max-width:560px){ .mora-mode-simple {padding:18px 12px;} .mora-simple-grid {gap:8px;} .mora-simple-choice{padding:12px 5px;min-height:144px;} .mora-simple-choice strong{font-size:19px;} .tracing-panel{padding:12px 8px;} .tracing-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;} }

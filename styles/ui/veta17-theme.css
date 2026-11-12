@@ -1,0 +1,69 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/ui/veta17-theme.css
+ * 役割：veta17-theme画面・機能の補助スタイル
+ * 利用画面：reading-memory.html,kotoba-dungeon.html,print-drills.html,index.html,pictogram-3d.html,kotoba-quest-ud.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* VETA17 – common five-color palette across the training, game and records pages.
+ * Does not recolor question photos, sprites or 3D WebGL content. */
+body[data-theme="blue"] {--app-main:#1976d2;--app-main-dark:#0d57a5;--app-main-soft:#e8f4ff;--app-accent:#5aa8f3;--app-bg:#eef7ff;--app-border:#c4def5;--v17-ink:#153b64;}
+body[data-theme="red"] {--app-main:#be415c;--app-main-dark:#8b2442;--app-main-soft:#fff0f4;--app-accent:#ec85a2;--app-bg:#fff5f6;--app-border:#edbbca;--v17-ink:#69293c;}
+body[data-theme="yellow"] {--app-main:#ab790c;--app-main-dark:#735005;--app-main-soft:#fff7d7;--app-accent:#e1b647;--app-bg:#fffae9;--app-border:#e7d49b;--v17-ink:#644808;}
+body[data-theme="green"] {--app-main:#19875b;--app-main-dark:#0a5b40;--app-main-soft:#e5f8ec;--app-accent:#5bae69;--app-bg:#effbf4;--app-border:#b9e1c5;--v17-ink:#15553c;}
+body[data-theme="purple"] {--app-main:#7550b5;--app-main-dark:#4c288c;--app-main-soft:#f1e9ff;--app-accent:#b05dd4;--app-bg:#f6f0ff;--app-border:#d8c6f3;--v17-ink:#452c77;}
+body[data-theme] {accent-color:var(--app-main);}
+body[data-theme] :is(.settings-panel,.quiz-card,.activity-panel-native,.records-card,.result-card,.kd-card,.kd-collectibles-card,.kd-next-task-card) {border-color:var(--app-border);}
+body[data-theme] :is(#settings,#home,#records,#result,#userSetup,#userProfileView) {background-color:var(--app-bg);}
+body[data-theme] :is(.setting-select-row,.v14-genre-controls,.training-needs-guide,.user-profile-local-note) {accent-color:var(--app-main);}
+body[data-theme] :is(.primary-button,.v17-save-settings) {background:var(--app-main);color:#fff;}
+body[data-theme] :is(.outline-button,.secondary-button,.head-icon-button,.back-button) {border-color:var(--app-border);}
+body[data-theme] :is(.screen-head-title,.settings-panel h3,.activity-head h3,.category-label) {color:var(--app-main-dark);}
+body[data-theme] :is(.theme-choice,.v14-genre-controls select) {color:var(--v17-ink);}
+.v17-text-back {width:auto!important;max-width:55vw;min-height:45px;padding:7px 12px!important;display:inline-flex;align-items:center;gap:6px;white-space:normal;text-align:left;font-size:clamp(12px,2.6vw,15px);font-weight:800;}
+.v17-save-settings {display:block;width:min(94%,620px);margin:20px auto 28px;min-height:58px;font-size:18px;font-weight:900;}
+.v17-answer-explanation {margin-top:10px;padding:11px 13px;background:var(--app-main-soft,#f0f8ff);border-left:5px solid var(--app-main,#1976d2);border-radius:9px;color:var(--v17-ink,#173453);font-weight:750;font-size:clamp(14px,2vw,17px);line-height:1.65;text-align:left;}
+/* Pixel-style dungeon remains intact; recolor its surrounding interactive panels. */
+body[data-theme] .kd-profile-hero {border-color:var(--app-main);}
+body[data-theme] .kd-next-task-card,body[data-theme] .kd-collectibles-card {box-shadow:0 4px 0 var(--app-border);}
+body[data-theme] .kd-primary-button,body[data-theme] .kd-start-button {background:linear-gradient(135deg,var(--app-accent),var(--app-main));color:white;}
+body[data-theme] .kd-pixel-menu-btn {border-color:var(--app-main);}
+body[data-theme] .kd-gacha-dialog {outline-color:var(--app-main-dark);}
+/* HUD only: do not touch movement stick, controls or WebGL scene. */
+body[data-theme] #qbox {border-color:var(--app-main);}
+body[data-theme] #pauseOverlay .panel {border-color:var(--app-border);}
+body[data-theme] #pauseOverlay .action {background:var(--app-main);}
+/* Fantasy event is modal. Do not let quiz text appear under the dialogue. */
+body.v17-conversation-active #quiz-question,body.v17-conversation-active #options-container,body.v17-conversation-active #hint-box,body.v17-conversation-active #message-text {visibility:hidden!important;}
+body[data-theme] .event-dialog {border-color:var(--app-accent);outline-color:var(--app-main-dark);}
+body[data-theme] .event-dialog-next {background:var(--app-main);color:#fff;}
+/* Reading / memory module uses its own layout, but shares accent colors. */
+body[data-theme] #back-to-kotoba {border-color:var(--app-border);color:var(--app-main-dark);}
+body[data-theme] :is(#tab-story-btn,#tab-quiz-btn).active {background:var(--app-main);color:white;}
+body[data-theme]:has(#story-page-title) {background:var(--app-bg);}
+body[data-theme]:has(#story-page-title) header {background:var(--app-main-soft);border-color:var(--app-border);}
+body[data-theme]:has(#story-page-title) #story-page-title {color:var(--app-main-dark);}
+@media screen {
+  body[data-theme]:has(#printPreview) {background:var(--app-bg);--green:var(--app-main);--mint:var(--app-main-soft);--border:var(--app-border);}
+  body[data-theme]:has(#printPreview) .app-header {background:var(--app-main);}
+  body[data-theme]:has(#printPreview) .genre-card.selected {background:var(--app-main-soft);border-color:var(--app-main);}
+}
+@media(prefers-reduced-motion:reduce){.v17-answer-explanation{animation:none!important;}}
+
+/* VETA18: labels must stay entirely within their button cells on narrow phones.
+   The two-line text remains legible without overlapping the page title. */
+#home .screen-head {grid-template-columns:110px minmax(0,1fr) 76px;gap:8px;}
+#home .screen-head-title {white-space:normal;overflow-wrap:anywhere;font-size:clamp(15px,2.6vw,21px);line-height:1.35;}
+#home .screen-head #homeToTitleBtn {width:100%!important;max-width:none;min-height:58px;}
+#home #activityPanel .activity-head {grid-template-columns:110px minmax(0,1fr);gap:12px;}
+#home #activityPanel #allGenreBtn {width:100%!important;max-width:none;min-height:58px;}
+#home .v17-text-back {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+ padding:5px 6px!important;text-align:center;font-size:clamp(13px,3.3vw,16px);line-height:1.25;overflow-wrap:break-word;}
+#home .v18-back-arrow {font-size:20px;line-height:1.15;font-weight:900;}
+@media(max-width:420px){
+ #home .screen-head {grid-template-columns:84px minmax(0,1fr) 62px;gap:5px;padding:3px 0;}
+ #home #activityPanel .activity-head {grid-template-columns:90px minmax(0,1fr);gap:8px;}
+ #home .v17-text-back {font-size:13px;}
+ #home .screen-head-title {font-size:clamp(14px,4vw,17px);}
+}

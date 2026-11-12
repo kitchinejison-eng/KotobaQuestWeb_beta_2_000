@@ -1,0 +1,25 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/training/reading-memory-ver120.css
+ * 役割：reading-memory-ver120画面・機能の補助スタイル
+ * 利用画面：reading-memory.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* 朗読・記憶：横長PCとスマホ縦表示を両立する軽量なCSS */
+html, body {max-width:100%;overflow-x:hidden;}
+body {min-height:100dvh;line-height:1.65;}
+main,header,footer {box-sizing:border-box;max-width:100%;}
+#story-section,#quiz-section,#result-section {width:100%;min-width:0;}
+#story-section button,#quiz-section button,#result-section button {min-height:44px;white-space:normal;overflow-wrap:anywhere;}
+#story-section p,#quiz-section p,#result-section p {overflow-wrap:anywhere;line-height:1.75;}
+#voice-status {min-height:1.5em;}
+@media(max-width:640px){
+ body {font-size:16px;}
+ main {width:100%;min-width:0;padding-left:12px!important;padding-right:12px!important;}
+ header {padding-left:12px!important;padding-right:12px!important;}
+ h1 {font-size:1.5rem!important;line-height:1.4!important;}
+ #story-section,#quiz-section,#result-section {padding:0;}
+ #story-section .text-xl,#quiz-section .text-xl {font-size:1.05rem!important;}
+ #story-section button,#quiz-section button {font-size:16px!important;padding:10px!important;}
+}

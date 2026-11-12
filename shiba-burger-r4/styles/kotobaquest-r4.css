@@ -1,0 +1,17 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：shiba-burger-r4/styles/kotobaquest-r4.css
+ * 役割：ことばクエストとR4ゲームのデザイン統一
+ * 利用画面：shiba-burger-r4/index.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* Minimal navigation/record display for the R4 standalone game inside KotobaQuest. */
+.quest-home-icon{display:grid;place-items:center;text-decoration:none;font-size:23px;flex:none;}
+.quest-home-icon:hover,.quest-home-icon:focus-visible{outline:2px solid #eed6a2;outline-offset:2px;}
+.quest-menu-link{display:inline-flex;align-items:center;text-decoration:none;white-space:normal;text-align:center;}
+.start-buttons .quest-menu-link{display:flex;width:100%;margin-top:10px;min-height:42px;}
+.quest-reward{font-size:12px;font-weight:800;margin:7px auto 13px;color:#285f43;line-height:1.7;}
+.quest-reward.is-warning{color:#a34836;}
+@media(max-width:760px){.hud-top .quest-home-icon{position:fixed;right:10px;top:55px;height:31px;width:31px;z-index:8;font-size:17px;}.result-actions .quest-menu-link{width:100%;}.result-card{max-height:95dvh;}}
+@media(prefers-reduced-motion:reduce){.quest-home-icon{transition:none;}}

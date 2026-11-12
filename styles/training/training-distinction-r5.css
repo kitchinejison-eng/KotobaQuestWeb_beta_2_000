@@ -1,0 +1,17 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/training/training-distinction-r5.css
+ * 役割：training-distinction-r5画面・機能の補助スタイル
+ * 利用画面：index.html
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* R5: 課題の違いが目で分かる回答欄。タッチでも操作しやすい。 */
+.board-practice-head{padding:.8rem 1rem;margin-bottom:.7rem;background:#eff9f3;border:1px solid #c0e3cc;border-radius:12px;color:#1c5937;font-weight:700}
+.board-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;width:100%;}
+.board-choice{min-height:108px;padding:.8rem .4rem!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-size:1.05rem!important;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+.board-choice-symbol{font-size:2rem;line-height:1.25;display:block}
+.board-choice-label{font-size:1rem;font-weight:700;text-align:center}
+.roleplay-head{padding:.75rem 1rem;margin-bottom:.7rem;background:#eef4ff;border:1px solid #c6d7ff;border-radius:12px;color:#274a78;font-weight:700}
+.roleplay-choice{min-height:58px;text-align:left;padding:.85rem 1rem!important;font-size:1rem!important}
+@media (max-width:430px){.board-choice-grid{gap:.55rem}.board-choice{min-height:96px;padding:.55rem .3rem!important}}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#183f35">
+  <meta name="description" content="柴犬の店員になってお客様のバーガー注文を記憶！全5問、4択で答える3Dバーガーショップゲーム。">
+  <title>しばバーガー | 注文おぼえてクイズ</title>
+  <link rel="stylesheet" href="./styles/style.css">
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+  <div id="stage" aria-hidden="true">
+    <div class="scene-art"></div>
+    <div id="threeHost"></div>
+    <div class="scene-vignette"></div>
+    <div id="fallbackCustomer" class="fallback-customer"></div>
+    <div id="sceneSpark" class="scene-spark"></div>
+  </div>
+
+  <header class="hud-top">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">🐕</div>
+      <div><div class="brand-tag">SHIBA BURGER · MEMORY SHIFT</div><h1>しばバーガー <small>注文おぼえてクイズ</small></h1></div>
+    </div>
+    <div class="game-status"><a class="icon-btn quest-home-icon" href="../index.html" title="ことばクエストのメニューへ" aria-label="ことばクエストのメニューへ戻る">⌂</a>
+      <div class="progress"><span class="tiny-label">ORDER</span><div id="progressDots" class="dots" aria-label="全5問"></div><span id="roundNumber" class="round-number">1 / 5</span></div>
+      <div class="score-pill"><span>★</span> <b id="score">000</b></div>
+      <button class="icon-btn" id="audioToggle" aria-label="音声をオフにする" title="音声の切り替え">🔊</button>
+      <button class="icon-btn" id="pauseButton" aria-label="一時停止" title="一時停止">Ⅱ</button>
+    </div>
+  </header>
+
+  <main id="gameUI" class="game-ui" aria-live="polite">
+    <div class="customer-badge" id="customerBadge"><span class="small-pulse"></span><span id="customerLabel">お客様が来店中</span></div>
+    <section class="order-bubble" id="orderBubble" aria-label="お客様の注文">
+      <div class="bubble-top"><span class="eyebrow">CUSTOMER ORDER</span><span class="speech-waves" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <p id="orderText">いらっしゃいませ！</p>
+      <div class="bubble-actions"><button id="replayButton" class="ghost-btn">🔊 もう一度聞く</button><button id="rememberButton" class="action-btn">覚えた！ 注文を確認 <span aria-hidden="true">→</span></button></div>
+    </section>
+    <div id="thinkMessage" class="think-message"><span class="think-icon">💭</span><strong>さて、何を注文したかな？</strong><small>お客様の注文を思い出してね</small></div>
+    <section id="answerPanel" class="answers" aria-label="4択の回答">
+      <div class="answer-heading"><div><span class="eyebrow">CHECK THE ORDER</span><h2>注文はどれだった？</h2></div><div class="answer-counter"><span id="answerLevel">LEVEL 1</span><small>ひとつ選ぼう</small></div></div>
+      <div id="answerGrid" class="answer-grid"></div>
+      <div class="answers-hint">💡 注文はもう表示されません。思い出して選びましょう。</div>
+    </section>
+    <div id="reaction" class="reaction" role="status"><div id="reactionIcon" class="reaction-icon">✨</div><strong id="reactionTitle">大正解！</strong><span id="reactionDetail">ありがとうございました！</span></div>
+    <div class="counter-id"><span class="small-pulse"></span> CASHIER <strong>柴犬店長</strong></div>
+  </main>
+
+  <div class="overlay" id="startOverlay">
+    <div class="start-card">
+      <div class="start-eyebrow"><span class="gold-line"></span> WELCOME TO SHIBA BURGER</div>
+      <div class="start-mark">🐾 <span>×</span> 🍔</div>
+      <h2>しばバーガー</h2>
+      <h3>注文おぼえてクイズ</h3>
+      <p>柴犬の店長になって、バーガーショップで接客！<br>お客様の注文をしっかり覚えて、<br>4つのメニューから正しい注文を選ぼう。</p>
+      <div class="how-grid"><div><span>👂</span><b>注文を聞く</b></div><div><span>🧠</span><b>覚える</b></div><div><span>🍔</span><b>4択で回答</b></div></div>
+      <div class="rules"><span class="rules-icon">📋</span><span><b>全5人のお客様に挑戦</b><small>正解すると喜んで帰り、間違えると怒って帰ってしまいます。</small></span></div>
+      <div class="start-buttons"><button id="startButton" class="main-cta">お店をオープン！ <span>▶</span></button><a class="outline-cta quest-menu-link" href="../index.html">⌂ ことばクエストに戻る</a></div>
+      <div class="start-footer"><span>🎮 マウス・タッチ操作</span><span>⏱ 基本は時間制限なし</span><span>🌟 ベストスコア <b id="startBest">0</b></span></div>
+      <div class="start-advanced"><label class="switch-row"><input type="checkbox" id="autoVoice" checked><span>お客様の注文を音声で読み上げる</span></label><label class="switch-row"><input type="checkbox" id="challengeMode"><span>チャレンジ：注文を8秒で記憶</span></label></div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="pauseOverlay">
+    <div class="simple-card"><div class="start-eyebrow">BREAK TIME</div><div class="big-icon">☕</div><h2>ちょっと休憩</h2><p>お客様をお待たせしています。<br>準備ができたら戻ってね。</p><button id="resumeButton" class="main-cta">お店に戻る</button><button id="pauseQuitButton" class="outline-cta">最初からやり直す</button></div>
+  </div>
+
+  <div class="overlay hidden" id="resultOverlay">
+    <div class="result-card">
+      <div class="start-eyebrow">TODAY'S SHIFT REPORT</div><div id="resultMedal" class="result-medal">🏆</div>
+      <h2>おつかれさま！</h2><div id="resultGrade" class="result-grade">しば店長の接客結果</div>
+      <div class="result-totals"><div><b id="resultCorrect">0<span>/5</span></b><small>正解した注文</small></div><div><b id="resultRate">0%</b><small>注文の正答率</small></div><div><b id="resultPoints">0</b><small>獲得ポイント</small></div></div>
+      <div id="questReward" class="quest-reward" aria-live="polite"></div><div class="result-list" id="resultList" aria-label="5問の結果"></div>
+      <div class="result-actions"><button id="retryButton" class="main-cta">もう一度チャレンジ ↻</button><button id="backTitleButton" class="outline-cta">タイトルへ戻る</button><a href="../index.html" class="outline-cta quest-menu-link">⌂ ことばクエストに戻る</a></div>
+    </div>
+  </div>
+
+  <div class="attribution">3D柴犬モデル：<a href="https://poly.pizza/m/y4wdQpg767" target="_blank" rel="noopener noreferrer">Shiba Inu by Quaternius</a>（CC0）｜<a href="../credits.html">使用素材・クレジット</a></div>
+  <script src="../vendor/three/three-classic-pc.js"></script>
+  <script src="../vendor/three/gltf-loader-classic-pc.js"></script>
+  <script src="./scripts/shiba-model-inline.js"></script>
+  <!-- ことばクエストの記録と熟練度。ゲーム本体のR4動作はこれらに依存しません。 -->
+  <link rel="stylesheet" href="../styles/ui/daily-streak.css">
+  <link rel="stylesheet" href="./styles/kotobaquest-r4.css">
+  <script src="../scripts/learning/difficulty-veta11.js"></script>
+  <script src="../scripts/learning/learning-mode-veta12.js"></script>
+  <script src="../scripts/learning/adaptive-learning.js"></script>
+  <script src="../scripts/learning/unified-learning-veta1.js"></script>
+  <script src="../scripts/system/daily-streak.js"></script>
+  <script src="../scripts/games/shiba-burger-integration.js"></script>
+  <script src="./scripts/orders-classic.js"></script>
+  <script src="./scripts/scene3d-classic.js"></script>
+  <script src="../scripts/audio/kotoba-audio-common-r5.js?v=r5"></script>
+  <script src="./scripts/app-classic.js"></script>
+  <script>
+    window.addEventListener('load',()=>{
+      if(window.ShibaGameReady)return;
+      const text=document.createElement('p');
+      text.setAttribute('role','alert');
+      text.style.cssText='margin:10px;padding:13px;background:#fff0db;color:#722b20;border:2px solid #d48d68;border-radius:12px;font-weight:bold';
+      text.textContent='起動に必要なファイルを読み込めません。ZIPをすべて展開し、このフォルダー内のindex.htmlをChromeまたはEdgeで開いてください。';
+      document.getElementById('startButton')?.after(text);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+/*
+ * 【ことばクエスト ver1.2.1 PC｜スタイル日本語注記】
+ * ファイル：styles/3d/3d-loading-r4.css
+ * 役割：3d-loading-r4画面・機能の補助スタイル
+ * 利用画面：必要時に読み込み
+ * 注意：CSSの背景画像は保存場所を基準に相対パスが解決されます。
+ * 注意：HTML側の<link>順を変えると色・サイズなどの上書き優先順位が変わります。
+ */
+/* 3D mini-games: honest loading state; percentage only for measurable model bytes. */
+.kq3d-loading{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(9,35,29,.89);padding:18px;backdrop-filter:blur(5px);color:#f8fff8;font-family:system-ui,"Noto Sans JP",sans-serif}
+.kq3d-loading[hidden]{display:none!important}
+.kq3d-loading-panel{width:min(440px,100%);padding:28px 20px;border:2px solid #a2e7b9;border-radius:23px;text-align:center;background:linear-gradient(155deg,#205942,#12392f);box-shadow:0 18px 55px #071912a3}
+.kq3d-loading-panel h2{font-size:clamp(20px,5vw,29px);margin:8px 0;line-height:1.35;color:#fff6d4}
+.kq3d-loading-panel p{font-size:14px;line-height:1.7;min-height:25px;margin:11px 0 14px;color:#ecf7eb}
+.kq3d-loading-icon{font-size:clamp(35px,10vw,57px)}
+.kq3d-track{height:12px;width:100%;border-radius:20px;background:#ffffff35;overflow:hidden;border:1px solid #ffffff40}
+.kq3d-bar{height:100%;width:18%;border-radius:20px;background:linear-gradient(90deg,#78dba0,#e8e695);animation:kq3d-indeterminate 1.6s ease-in-out infinite}
+.kq3d-bar.kq3d-determinate{animation:none;transition:width .15s ease}
+.kq3d-retry,.kq3d-continue{margin:13px 4px 0;padding:11px 15px;border-radius:14px;border:1px solid #f0edbb;background:#fff6d5;color:#194c38;font-weight:900;cursor:pointer;min-height:46px}
+.kq3d-continue{background:#295943;color:#f2fff6;border-color:#9bdbaf}
+.kq3d-retry[hidden],.kq3d-continue[hidden]{display:none!important}
+@keyframes kq3d-indeterminate{0%{width:10%;transform:translateX(0)}55%{width:45%;transform:translateX(90%)}100%{width:12%;transform:translateX(660%)}}
+@media(prefers-reduced-motion:reduce){.kq3d-bar{animation:none}}
