@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#172c29">
+  <meta name="description" content="ことばクエストの3Dゲーム「猫の言葉選び」。本物に近い白黒猫で言葉のゲートを選びます。">
+  <title>猫の言葉選び | ことばクエスト 3Dゲーム</title>
+  <link rel="stylesheet" href="styles/ui/daily-streak.css?v=108">
+  <style>
+    :root{--ink:#17332e;--glass:rgba(17,42,38,.89);--cream:#fff8e8;--gold:#ffdc90;--green:#b4efc7;--muted:#d1e0d7}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b8d7cf;color:var(--cream);font-family:system-ui,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible{outline:3px solid #fff0b3;outline-offset:3px}
+    #game{position:fixed;inset:0}#game canvas{display:block;touch-action:none}#vignette{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,#0c302b75 0%,transparent 23%,transparent 68%,#12292355 100%)}
+    .ui{position:fixed;inset:0;pointer-events:none;display:none}.ui.show{display:block}.topline{position:absolute;left:22px;top:17px;display:flex;align-items:center;gap:12px}.brand{font-family:Georgia,serif;font-size:23px;font-style:italic;text-shadow:0 2px 13px #0c1e1da8}.brand small{display:block;font:700 10px system-ui,sans-serif;letter-spacing:.16em;color:#ffe6a4}.pill{border:1px solid #ffffff52;background:var(--glass);border-radius:100px;padding:10px 15px;font-weight:800;font-size:14px;backdrop-filter:blur(12px)}
+    .tools{position:absolute;right:20px;top:16px;display:flex;gap:8px;pointer-events:auto}.tools button{color:white;border:1px solid #ffffff63;background:var(--glass);border-radius:100px;padding:10px 14px;font-weight:700}.tools button:hover,.tools button:focus-visible{background:#23554e}
+    .question-card{position:absolute;top:86px;left:50%;transform:translateX(-50%);width:min(590px,calc(100vw - 36px));text-align:center;background:linear-gradient(130deg,rgba(23,51,46,.95),rgba(32,67,58,.89));border:1px solid #fff9d75d;border-radius:22px;padding:17px 26px 20px;box-shadow:0 10px 36px #072a2275;backdrop-filter:blur(12px)}.eyebrow{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:.12em}.question-card h2{font-size:clamp(20px,3.2vw,30px);line-height:1.5;margin:6px 0 0}.subline{margin-top:5px;color:#d1e6db;font-size:12px}.progress-track{height:6px;background:#ffffff36;border-radius:10px;margin-top:13px;overflow:hidden}.progress-fill{height:100%;width:0%;border-radius:10px;background:linear-gradient(90deg,#a3f0c4,#f5db8f);transition:width .2s}
+    .lane-area{position:absolute;bottom:45px;left:50%;transform:translateX(-50%);width:min(750px,calc(100vw - 34px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;pointer-events:auto}.lane{border:2px solid #ffffff80;background:rgba(16,45,41,.87);color:#fff;border-radius:17px;min-height:90px;padding:10px 7px;box-shadow:0 6px 23px #092f2b63;backdrop-filter:blur(12px);transition:transform .16s,border-color .16s,background .16s}.lane .arrow{font-size:13px;letter-spacing:.05em;opacity:.75}.lane .answer{display:block;font-size:clamp(14px,1.9vw,19px);font-weight:900;margin-top:6px;line-height:1.35;overflow-wrap:anywhere}.lane.active{background:#fff6d8;color:#1b3e34;border-color:#ffcd61;transform:translateY(-8px);box-shadow:0 0 0 3px #fff6d849,0 11px 30px #1633289a}.lane.active .arrow{opacity:1}.lane:hover{border-color:#fff2b6}
+    .info{position:absolute;bottom:157px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;background:#123c35bc;border:1px solid #ffffff57;border-radius:30px;padding:9px 17px;font-size:13px;white-space:nowrap;backdrop-filter:blur(10px)}.distance{color:#ffe5a0;font-weight:900}.credit{position:absolute;bottom:7px;right:12px;color:#fffcebcc;text-shadow:0 1px 9px #13241d;pointer-events:auto;font-size:9px}.credit a{color:inherit}
+    .overlay{position:fixed;inset:0;z-index:5;background:#11292296;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}.overlay.hidden{display:none}.panel{width:min(530px,100%);max-height:min(93vh,850px);overflow:auto;background:linear-gradient(145deg,#173d34,#102b2a);border:1px solid #f7df9b88;border-radius:27px;padding:30px;box-shadow:0 23px 80px #071d1aba;text-align:center}.panel .kicker{font-size:12px;letter-spacing:.17em;color:var(--gold);font-weight:900}.panel h1{font-size:clamp(30px,5vw,44px);line-height:1.25;margin:11px 0 10px;font-family:Georgia,"Noto Sans JP",sans-serif}.panel p{line-height:1.85;color:#deede4;font-size:14px;margin:10px 0}.panel .cat-icon{font-size:49px}.panel .field{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 0}.panel label{font-weight:800;font-size:14px}.panel select{color:#16392f;background:#fff7df;border-radius:12px;border:0;padding:10px 12px;min-width:145px;font-weight:900}.main-btn{border:0;border-radius:999px;padding:14px 29px;background:linear-gradient(130deg,#ffe7a8,#ffc977);color:#244235;font-size:17px;font-weight:900;box-shadow:0 7px 0 #b78943;min-width:210px;margin:15px auto 8px}.main-btn:active{transform:translateY(3px);box-shadow:0 4px 0 #b78943}.main-btn:disabled{opacity:.65;cursor:wait}.panel small{display:block;color:#b6c9be;font-size:11px;line-height:1.6}.feature{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:15px auto}.feature span{border-radius:999px;background:#ffffff19;border:1px solid #ffffff36;padding:6px 10px;font-size:12px}
+    .feedback{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.88);z-index:4;background:#163e35ee;border:2px solid #b0f3c6;padding:24px 32px;border-radius:23px;box-shadow:0 17px 54px #0b291fd0;min-width:min(420px,85vw);text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}.feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.feedback.wrong{border-color:#ffbdad}.feedback h3{font-size:31px;margin:0 0 8px}.feedback p{margin:7px 0;line-height:1.65}.feedback .explain{color:#e0ebe4;font-size:13px}
+    #resultPanel{text-align:left}.result-header{text-align:center}.big-score{font-size:46px;color:#ffe3a1;font-weight:1000;margin:6px 0}.reward{font-size:19px;font-weight:900;text-align:center;margin:0 0 16px}.results{display:grid;gap:9px;max-height:37vh;overflow:auto;text-align:left}.result-row{padding:12px 14px;background:#ffffff0c;border:1px solid #ffffff1f;border-radius:12px}.result-row strong{display:block;font-size:13px}.result-row span{font-size:12px;color:#dce8dd;display:block;margin-top:3px;line-height:1.5}.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.secondary{background:transparent;border:1px solid #e2f1dd8c;color:#f5f8ed;border-radius:999px;padding:12px 20px;margin:16px 0 0;font-weight:800}
+    .mastery-info{border-radius:12px;background:#ffffff17;padding:10px 14px;margin:12px 0;font-size:13px;font-weight:800;text-align:center;color:#fff2c7}.mastery-info:empty{display:none}#catDailyStreak{margin:14px 0}#catDailyStreak:empty{display:none}
+    #error{display:none;position:fixed;inset:0;z-index:10;align-items:center;justify-content:center;background:#132d2a;padding:24px;text-align:center}#error p{max-width:460px;line-height:1.75}
+    @media(max-width:730px){.topline{left:13px;top:12px;gap:6px}.brand{font-size:17px}.brand small{font-size:8px}.pill{font-size:12px;padding:7px 9px}.tools{right:10px;top:11px;gap:5px}.tools button{padding:7px 8px;font-size:11px}.question-card{top:71px;padding:12px 14px 14px}.question-card h2{font-size:20px}.subline{font-size:11px}.lane-area{bottom:27px;gap:7px;width:calc(100vw - 18px)}.lane{min-height:85px;padding:9px 4px;border-radius:12px}.lane .answer{font-size:15px}.info{bottom:126px;padding:7px 11px;font-size:11px}.credit{right:8px;bottom:3px;font-size:8px}.panel{padding:23px 19px}.panel h1{font-size:33px}}
+    @media(max-height:650px){.question-card{top:59px;padding:8px 12px}.question-card h2{font-size:17px;line-height:1.4}.question-card .subline,.question-card .progress-track{display:none}.lane-area{bottom:14px}.lane{min-height:60px}.info{bottom:90px}.topline{top:9px}.tools{top:9px}.credit{display:none}}
+    @media(max-width:730px){.tools{top:51px}.question-card{top:96px}}
+    @media(max-width:730px) and (max-height:650px){.tools{top:42px}.question-card{top:80px}}
+    @media(prefers-reduced-motion:reduce){.lane,.feedback,.progress-fill{transition:none}}
+  </style>
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+  <div id="game"></div><div id="vignette"></div>
+  <div id="hud" class="ui" aria-live="off">
+    <div class="topline"><div class="brand">猫の言葉選び<small>ことばクエスト · 3Dゲーム</small></div><div class="pill" id="score">⭐ 0 / 5</div></div>
+    <div class="tools"><button id="speak" title="問題を読み上げる">🔊 読み上げ</button><button id="mute" title="効果音を切り替える">♪ ON</button><button id="settings" title="難易度・設定">⚙ 設定</button></div>
+    <div class="question-card" aria-live="polite"><div class="eyebrow" id="questionNo">QUESTION 01 / 05</div><h2 id="prompt">問題を準備しています</h2><div class="subline">正しい答えのゲートへ猫を移動させよう！</div><div class="progress-track"><div class="progress-fill" id="progress"></div></div></div>
+    <div class="info">🐈 常時ダッシュ <span>•</span> <span id="distance" class="distance">ゲートまで 16m</span> <span>•</span> 左右だけで操作</div>
+    <div class="lane-area" aria-label="走るレーンを選ぶ">
+      <button class="lane" data-lane="0" aria-label="左のレーン"><span class="arrow">← 左</span><span class="answer" id="answer0">—</span></button>
+      <button class="lane" data-lane="1" aria-label="中央のレーン"><span class="arrow">中央</span><span class="answer" id="answer1">—</span></button>
+      <button class="lane" data-lane="2" aria-label="右のレーン"><span class="arrow">右 →</span><span class="answer" id="answer2">—</span></button>
+    </div>
+    <div class="credit">3D cat: <a href="https://sketchfab.com/3d-models/bicolor-cat-e623a618ca344a8393d7ba4d63ec23cf" target="_blank" rel="noopener">Bicolor Cat / kenchoo</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div>
+  </div>
+  <div id="loadingOverlay" class="overlay"><div class="panel"><div class="cat-icon">🐈‍⬛</div><div class="kicker">KOTOBA QUEST · 3D GAME</div><h1 id="loadingTitle">猫の3Dワールドを準備中…</h1><p id="loading" role="status" aria-live="polite">3D猫モデルを読み込み中です。準備ができるまでお待ちください。</p><button id="tapToStart" class="main-btn" type="button" hidden disabled>🐾 タップしてスタート</button><small>操作：PCは← → / A D、スマホは画面下の3つの答えから選択</small></div></div>
+  <div id="settingsOverlay" class="overlay hidden"><div class="panel"><div class="kicker">GAME SETTINGS</div><h1>難易度・設定</h1><p>問題数は5問です。解放済みの難易度を選べます。</p><div class="field"><label for="level">難易度</label><select id="level"></select></div><button id="applySettings" class="main-btn" type="button">この難易度で再挑戦</button><button id="cancelSettings" class="secondary" type="button">キャンセル</button><button id="settingsBack" class="secondary" type="button">← 3Dゲーム一覧へ戻る</button></div></div>
+  <div id="feedback" class="feedback" role="status" aria-live="assertive"><h3 id="feedbackTitle"></h3><p id="feedbackText"></p><p id="feedbackExplain" class="explain"></p></div>
+  <div id="results" class="overlay hidden"><div class="panel" id="resultPanel"><div class="result-header"><div class="kicker">GAME COMPLETE!</div><h1>猫の言葉選び｜結果</h1><div id="finalScore" class="big-score">0 / 5</div><div class="reward" id="reward"></div><div id="masteryInfo" class="mastery-info"></div><p>問題ごとの答えと復習ポイント</p></div><div class="results" id="review"></div><div id="catDailyStreak" class="daily-streak-slot"></div><div class="result-actions"><button id="again" class="main-btn">もう一度チャレンジ</button><button id="levelBack" class="secondary">難易度を選ぶ</button><button id="backToGenres" class="secondary">← 3Dゲーム一覧に戻る</button></div></div></div>
+  <div id="error"><div><h2>3Dゲームを表示できません</h2><p id="errorMessage">WebGLが必要です。Chrome、Edge、Safariの最新版でお試しください。</p></div></div>
+  <script src="scripts/system/daily-streak.js?v=108"></script>
+  <script src="scripts/system/user-profile.js?v=veta17-id"></script>
+  <script src="scripts/learning/learning-mode-veta12.js?v=veta17-on"></script>
+  <script src="scripts/learning/adaptive-learning.js?v=veta12"></script>
+  <script src="scripts/learning/unified-learning-veta1.js?v=veta12"></script>
+  <script src="scripts/learning/difficulty-veta11.js?v=veta14-level-lock"></script>
+  <script src="scripts/games/cat-word-race-integration.js?v=veta27"></script>
+  <script src="scripts/3d/pc-3d-guide.js"></script>
+  <script src="vendor/three/three-classic-pc.js"></script>
+  <script src="vendor/three/gltf-loader-classic-pc.js"></script>
+  <script src="scripts/3d/pc-models-inline.js"></script>
+  <script>
+    const THREE=window.THREE,GLTFLoader=window.KQGLTFLoader;
+    const $=id=>document.getElementById(id);
+    const RAW_QUESTIONS=[
+      [
+        ['空を飛ぶ動物は？','鳥','犬','魚',0,'鳥は翼を使って空を飛びます。','言葉と意味'],
+        ['雨の日に使うものは？','傘','お皿','靴下',0,'傘は雨にぬれないために使います。','身近な道具'],
+        ['海で泳ぐ生き物は？','魚','ねこ','うさぎ',0,'魚は水の中で生活する生き物です。','カテゴリー'],
+        ['ごはんを食べる道具は？','スプーン','消しゴム','定規',0,'スプーンは食事に使う道具です。','生活語彙'],
+        ['夜の空に見えるものは？','月','信号機','冷蔵庫',0,'月は夜空で見られる天体です。','意味理解']
+      ],
+      [
+        ['「あつい」の反対は？','つめたい','おもたい','あかるい',0,'「あつい」と「つめたい」は反対の意味です。','反対語'],
+        ['お店で品物を買うとき払うものは？','お金','ハサミ','ふとん',0,'買い物ではお金を使って支払います。','生活語彙'],
+        ['「大きい」の反対は？','小さい','長い','広い',0,'大きさを表す反対語は「小さい」です。','反対語'],
+        ['赤くて丸い果物といえば？','りんご','レタス','きゅうり',0,'りんごは一般に赤くて丸い果物です。','特徴から推理'],
+        ['手を洗う場所は？','洗面所','寝室','玄関の外',0,'手を洗う場所として洗面所が適切です。','場所の理解']
+      ],
+      [
+        ['野菜の仲間はどれ？','にんじん','バナナ','牛乳',0,'にんじんは野菜の仲間です。','カテゴリー分類'],
+        ['乗り物の仲間はどれ？','電車','机','スプーン',0,'電車は人を運ぶ乗り物です。','カテゴリー分類'],
+        ['「走る」に近い動きは？','かける','寝る','座る',0,'「かける」は素早く走る動きを表します。','動詞の意味'],
+        ['飲み物の仲間はどれ？','お茶','パン','帽子',0,'お茶は飲み物です。','カテゴリー分類'],
+        ['「うれしい」に近い気持ちは？','楽しい','悲しい','こわい',0,'「楽しい」はうれしい気持ちに近い言葉です。','感情語']
+      ],
+      [
+        ['「青いコップ」を選ぼう','青いコップ','赤いかばん','黄色い本',0,'色と物の両方を確認する指示です。','二語の理解'],
+        ['「駅に行く」乗り物を選ぼう','電車','フライパン','まくら',0,'電車は駅に発着する乗り物です。','文章理解'],
+        ['「右の手」を表す言葉は？','右手','左足','両ひざ',0,'「右」と「手」の両方が合っています。','指示の理解'],
+        ['「丸くて食べられるもの」は？','みかん','時計','ボール',0,'みかんは丸い形で食べられる果物です。','特徴の組合せ'],
+        ['「朝に食べる食事」は？','朝ごはん','晩ごはん','おやつ',0,'朝に食べる食事を朝ごはんといいます。','時間と言葉']
+      ],
+      [
+        ['「犬は公園で走る」場所は？','公園','台所','学校の教室',0,'文章に「公園で」と書かれています。','文章の情報'],
+        ['「猫は水を飲んだ」何を飲んだ？','水','お茶','牛乳',0,'飲んだものは文章の中の「水」です。','文章の情報'],
+        ['「赤い花を三本」必要な本数は？','三本','一本','五本',0,'「三本」と数が指定されています。','数と指示'],
+        ['「先に靴をはく」最初の動作は？','靴をはく','靴をぬぐ','手を洗う',0,'「先に」が最初の行動を示します。','順序の理解'],
+        ['「本を棚に戻す」置く場所は？','棚','冷蔵庫','ベッド',0,'本を戻す場所は「棚」です。','指示の理解']
+      ],
+      [
+        ['のどが渇いたときにすることは？','水を飲む','帽子をかぶる','窓を閉める',0,'のどが渇いたときは水分をとります。','状況判断'],
+        ['手が汚れたときにすることは？','手を洗う','電気を消す','本を読む',0,'汚れた手は水や石けんで洗います。','状況判断'],
+        ['電車に乗る前に確認するのは？','行き先','今日の夕食','好きな色',0,'目的地に行く電車かどうか確認します。','生活判断'],
+        ['忘れ物をしたときにまずすることは？','置いた場所を思い出す','走り回る','あきらめる',0,'最後に使った場所などを確認すると探しやすくなります。','問題解決'],
+        ['信号が赤ならどうする？','止まる','走って渡る','飛び跳ねる',0,'赤信号では止まり、青になるのを待ちます。','安全な判断']
+      ],
+      [
+        ['「机の下のかばん」探す場所は？','机の下','机の上','玄関の外',0,'「下」という位置の情報が重要です。','位置関係'],
+        ['「赤い箱の左の本」どこにある？','赤い箱の左','赤い箱の右','青い箱の中',0,'色と左右の両方を確かめます。','複数の指示'],
+        ['「昼食のあと歯をみがく」先にすることは？','昼食','歯みがき','就寝',0,'「あと」は順番を表します。','時間の順序'],
+        ['「青い帽子ではなく白い帽子」選ぶのは？','白い帽子','青い帽子','赤い靴',0,'否定された「青い」ではなく「白い」が答えです。','否定表現'],
+        ['「三つのうち一つ取る」取る数は？','一つ','三つ','二つ',0,'「一つ取る」という指示を確認しましょう。','数量理解']
+      ],
+      [
+        ['雨が降りそうです。外出するとき持つものは？','折りたたみ傘','日記帳','まくら',0,'雨に備えて傘を持って行くのが適切です。','状況の推論'],
+        ['友達に会ったら最初に言う言葉は？','こんにちは','いただきます','おやすみ',0,'会ったときはあいさつをします。','会話の場面'],
+        ['店員に場所を聞きたい。適切なのは？','すみません','さようなら','おめでとう',0,'最初に「すみません」と声をかけると自然です。','実用会話'],
+        ['電話の声が聞き取りにくいときは？','聞き返す','適当に返事する','すぐ切る',0,'聞き返して内容を確認する方法があります。','会話の工夫'],
+        ['レジで順番待ち。どうする？','列に並ぶ','先に割り込む','店の外へ走る',0,'順番を待つことが適切です。','生活場面']
+      ],
+      [
+        ['「牛乳を買い、帰宅して冷蔵庫へ」最後は？','冷蔵庫へ入れる','牛乳を買う','店へ向かう',0,'「買う→帰る→冷蔵庫」の順番です。','複数手順'],
+        ['「雨のため試合は明日に変更」試合はいつ？','明日','今日','昨日',0,'「明日に変更」と書かれています。','情報の読み取り'],
+        ['「青い箱だけ開けないで」開けてはいけないのは？','青い箱','赤い箱','緑の箱',0,'否定の指示がついているのは青い箱です。','否定文'],
+        ['「バスで駅へ行き、電車に乗る」先に乗るのは？','バス','電車','タクシー',0,'文章の最初に「バスで駅へ行き」とあります。','手順の理解'],
+        ['「薬を飲む前に説明書を読む」先にすることは？','説明書を読む','薬を飲む','寝る',0,'「前に」の指示で読むことが先になります。','順序の判断']
+      ],
+      [
+        ['「受付後、番号を呼ばれたら進む」待つのはいつ？','受付のあと','受付の前','帰宅のあと',0,'受付を終えてから番号が呼ばれるのを待ちます。','手順の理解'],
+        ['「図書館では声を小さく」適切なのは？','静かに話す','大声で叫ぶ','走って遊ぶ',0,'周囲への配慮から小さな声で話します。','場面の判断'],
+        ['「もし道がわからなければ人に聞く」条件は？','道がわからないとき','家にいるとき','食事が終わったとき',0,'「もし〜なら」の条件を読み取りましょう。','条件文'],
+        ['「注文した品が違う」相手への伝え方は？','違う品が来たと伝える','黙って捨てる','何も言わず帰る',0,'注文内容を落ち着いて伝えるのが適切です。','実用会話'],
+        ['「電車は遅延、急ぐ場合は別経路」何を検討する？','別の行き方','同じ電車だけ待つ','目的地を忘れる',0,'状況に応じて別経路を考える指示です。','文章の推論']
+      ]
+    ];
+    const lanes=[-1.65,0,1.65], colors=[0x5e99c3,0xbe9464,0x9d80b8];
+    const keySet=new Set(),qCards=[...document.querySelectorAll('.lane')];
+    let scene,camera,renderer,catModel=null,catRoot=new THREE.Group(),clock=new THREE.Clock();
+    let soundContext=null,soundOn=true,catHeight=.4,catFloor=0,walkTime=0,stepTime=0,blend=0;
+    const legs=[],tailBones=[],twist=new THREE.Quaternion(),axis=new THREE.Vector3(0,1,0);
+    const state={mode:'loading',level:1,questions:[],index:0,correct:0,answers:[],lane:1,gateZ:-17,gateRoot:null,feedbackTime:0,particles:[],startedAt:null};
+    // Android調整版の背景負荷削減をモバイルブラウザにも反映。
+    const sceneryBudget=window.innerWidth<780 ? .6 : window.innerWidth<1024 ? .8 : 1;
+    const random=(()=>{let seed=29581;return()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296}})();
+    const material=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+    const make=(geo,mat,parent,x=0,y=0,z=0)=>{const obj=new THREE.Mesh(geo,mat);obj.position.set(x,y,z);obj.castShadow=true;obj.receiveShadow=true;parent.add(obj);return obj};
+    function updateLevelOptions(){
+      const bridge=window.KotobaCatRaceIntegration,progress=bridge?bridge.getProgress():{selected:1,unlocked:1};
+      const select=$('level');select.replaceChildren();
+      for(let i=1;i<=Math.min(10,progress.unlocked);i++){
+        const option=document.createElement('option');option.value=String(i);
+        option.textContent=`Lv.${i} ${i<=3?'やさしい':i<=6?'ふつう':i<=8?'しっかり':'チャレンジ'}`;
+        select.appendChild(option);
+      }
+      select.value=String(progress.selected);
+    }
+    updateLevelOptions();
+    try{const opts=JSON.parse(localStorage.getItem('kotobaquest_audio_v86')||'{}');soundOn=opts.seOn!==false}catch(_){}
+    $('mute').textContent=soundOn?'♪ ON':'♪ OFF';
+    function seVolume(){try{const opts=JSON.parse(localStorage.getItem('kotobaquest_audio_v86')||'{}');if(opts.seOn===false)return 0;const master=Number(localStorage.getItem('kotobaquest_volume_v3')||60)/100;return Math.max(0,Math.min(1,master))*Math.max(0,Math.min(1,Number(opts.se??100)/100))}catch(_){return .6}}
+    function fail(message){$('error').style.display='flex';$('errorMessage').textContent=message;console.error(message)}
+    function sound(freq,duration,kind='sine',vol=.07){if(!soundOn||!soundContext||soundContext.state!=='running')return;const o=soundContext.createOscillator(),g=soundContext.createGain();o.type=kind;o.frequency.setValueAtTime(freq,soundContext.currentTime);g.gain.setValueAtTime(vol*seVolume(),soundContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,soundContext.currentTime+duration);o.connect(g);g.connect(soundContext.destination);o.start();o.stop(soundContext.currentTime+duration)}
+    function pawSound(){if(!soundOn||!soundContext||soundContext.state!=='running')return;const n=Math.floor(soundContext.sampleRate*.048),buf=soundContext.createBuffer(1,n,soundContext.sampleRate),v=buf.getChannelData(0);for(let i=0;i<n;i++)v[i]=(random()*2-1)*(1-i/n)**2;const src=soundContext.createBufferSource(),filter=soundContext.createBiquadFilter(),g=soundContext.createGain();src.buffer=buf;filter.type='lowpass';filter.frequency.value=390;g.gain.value=.07*seVolume();src.connect(filter);filter.connect(g);g.connect(soundContext.destination);src.start()}
+    function initScene(){
+      const probe=document.createElement('canvas');if(!probe.getContext('webgl2')&&!probe.getContext('webgl'))throw Error('この端末はWebGLに対応していません。');
+      scene=new THREE.Scene();scene.background=new THREE.Color(0xb9d8d2);scene.fog=new THREE.FogExp2(0xbcd8c5,.018);
+      camera=new THREE.PerspectiveCamera(59,innerWidth/innerHeight,.03,130);
+      renderer=new THREE.WebGLRenderer({antialias:innerWidth>=780,alpha:false,powerPreference:'low-power'});
+      renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,innerWidth<780?1.2:1.45));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;renderer.shadowMap.enabled=innerWidth>=780;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('game').appendChild(renderer.domElement);
+      scene.add(new THREE.HemisphereLight(0xf2faff,0x6b8c6a,2.0));const sun=new THREE.DirectionalLight(0xffedc8,2.5);sun.position.set(-7,14,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-20;sun.shadow.camera.near=.1;sun.shadow.camera.far=40;scene.add(sun);sun.target=catRoot;scene.add(sun.target);
+      const ground=make(new THREE.PlaneGeometry(150,230),material(0x91b585),scene,0,-.04,-97);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.castShadow=false;
+      const road=make(new THREE.BoxGeometry(5.38,.045,190),material(0xc7b99c),scene,0,-.02,-83);road.castShadow=false;
+      const edge=material(0xf6efd4),dashes=material(0xf5ebd0),wood=material(0x886447),leaf=material(0x4e8b68),leafB=material(0x6da27b),stone=material(0xa0a79d),flowers=[material(0xf0c97c),material(0xf6bca4),material(0xbecbe9)];
+      for(const x of [-2.58,2.58])make(new THREE.BoxGeometry(.045,.018,189),edge,scene,x,.023,-83);
+      for(let z=5;z>-177;z-=2.4){for(const x of [-.83,.83]){const mark=make(new THREE.BoxGeometry(.045,.009,1.25),dashes,scene,x,.019,z);mark.castShadow=false}}
+      for(let z=4;z>-175;z-=8){for(const sign of [-1,1]){const x=sign*2.97;make(new THREE.CylinderGeometry(.045,.055,.48,7),wood,scene,x,.22,z);make(new THREE.BoxGeometry(.07,.055,7.6),wood,scene,x,.38,z-3.8)}}
+      for(let i=0;i<Math.round(175*sceneryBudget);i++){const z=5-random()*182,side=random()>.5?1:-1,x=side*(3.7+random()*13);if(random()<.72){const scale=.65+random()*1.4;make(new THREE.CylinderGeometry(.11*scale,.18*scale,1.1*scale,7),wood,scene,x,.55*scale,z);make(new THREE.IcosahedronGeometry(.73*scale,1),random()>.5?leaf:leafB,scene,x,1.53*scale,z)}else{make(new THREE.DodecahedronGeometry(.12+random()*.24,0),stone,scene,x,.13,z)}}
+      for(let i=0;i<Math.round(380*sceneryBudget);i++){const z=6-random()*185,x=(random()>.5?1:-1)*(2.84+random()*2.8);const petal=make(new THREE.IcosahedronGeometry(.03+random()*.026,0),flowers[Math.floor(random()*flowers.length)],scene,x,.12+random()*.2,z);petal.castShadow=false}
+      for(let i=0;i<6;i++){const z=-30-i*30;const post=make(new THREE.CylinderGeometry(.035,.045,2.3,6),wood,scene,-3.55,1.15,z);post.castShadow=false;const flag=make(new THREE.PlaneGeometry(.95,.55),new THREE.MeshBasicMaterial({color:i%2?0xf4cb8f:0x96c9a1,side:THREE.DoubleSide}),scene,-3.07,1.94,z);flag.rotation.y=Math.PI/2;flag.castShadow=false}
+      scene.add(catRoot);camera.position.set(0,1.7,4.4);camera.lookAt(0,.6,-4);
+      new GLTFLoader().load('tuxedo-cat.glb',gltf=>{
+        catModel=gltf.scene;catRoot.add(catModel);catModel.updateWorldMatrix(true,true);const box=new THREE.Box3();catModel.traverse(o=>{if(o.isMesh&&o.visible)box.union(new THREE.Box3().setFromObject(o))});const size=new THREE.Vector3();box.getSize(size);if(size.y<=0)throw Error('猫モデルの大きさを取得できません');const scale=.4/size.y;catHeight=.4;catFloor=-box.min.y*scale;catModel.scale.setScalar(scale);catModel.position.y=catFloor;
+        catModel.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;for(const mat of(Array.isArray(o.material)?o.material:[o.material])){if(!mat)continue;mat.side=THREE.DoubleSide;mat.transparent=false;mat.opacity=1;mat.alphaTest=0;mat.depthTest=true;mat.depthWrite=true;mat.needsUpdate=true}});
+        const bone=n=>catModel.getObjectByName(n);for(const [prefix,hipSuffix,kneeSuffix,phase,dir] of [['Wolf_l_FrontLeg_',4,3,0,1],['Wolf_r_FrontLeg_',10,9,Math.PI,-1],['Wolf_l_HindLeg_',27,26,Math.PI*.5,-1],['Wolf_r_HindLeg_',33,32,Math.PI*1.5,1]]){const hip=bone(prefix+'HipSHJnt_'+hipSuffix),knee=bone(prefix+(prefix.includes('Hind')?'Knee1SHJnt_':'KneeSHJnt_')+kneeSuffix);if(hip&&knee)legs.push({hip,knee,hipRest:hip.quaternion.clone(),kneeRest:knee.quaternion.clone(),phase,dir})}
+        for(let i=0;i<4;i++){const b=bone('Wolf_Tail_01_0'+(i+2)+'SHJnt_'+(37-i));if(b)tailBones.push([b,b.quaternion.clone(),i])}
+        state.mode='ready';$('loadingTitle').textContent='猫の言葉選び';$('loading').textContent='準備完了！ 画面をタップまたはクリックすると猫が走り始めます。';$('tapToStart').hidden=false;$('tapToStart').disabled=false;$('tapToStart').focus({preventScroll:true});
+      },undefined,()=>fail('猫の3Dモデルを読み込めませんでした。通信を確認して再読み込みしてください。'));
+      addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+      requestAnimationFrame(frame);
+    }
+    function animatedCat(dt,running){
+      blend=THREE.MathUtils.damp(blend,running?1:0,12,dt);
+      if(running){walkTime+=dt*18;stepTime+=dt;if(stepTime>.16){stepTime=0;pawSound()}}else stepTime=0;
+      for(const leg of legs){const w=Math.sin(walkTime+leg.phase);twist.setFromAxisAngle(axis,w*.34*blend*leg.dir);leg.hip.quaternion.copy(leg.hipRest).multiply(twist);twist.setFromAxisAngle(axis,Math.max(0,-w)*.24*blend*leg.dir);leg.knee.quaternion.copy(leg.kneeRest).multiply(twist)}
+      for(const [b,rest,i] of tailBones){twist.setFromAxisAngle(new THREE.Vector3(0,0,1),Math.sin(performance.now()*.0014+i*.65)*(.055+i*.008));b.quaternion.copy(rest).multiply(twist)}
+      if(catModel)catModel.position.y=catFloor+Math.sin(walkTime*2)*.005*blend;
+    }
+    function shuffleChoices(q){const choices=q.slice(1,4).map((answer,i)=>({answer,original:i}));for(let i=2;i>0;i--){const j=Math.floor(Math.random()*(i+1));[choices[i],choices[j]]=[choices[j],choices[i]]}return{prompt:q[0],options:choices.map(x=>x.answer),answer:choices.findIndex(x=>x.original===q[4]),explain:q[5],type:q[6]}}
+    function selectLane(n){if(state.mode!=='running')return;state.lane=Math.max(0,Math.min(2,n));qCards.forEach((b,i)=>{b.classList.toggle('active',i===state.lane);b.setAttribute('aria-pressed',String(i===state.lane))});sound(260+state.lane*65,.045,'triangle',.018)}
+    function labelTexture(text,accent){const canvas=document.createElement('canvas');canvas.width=768;canvas.height=400;const c=canvas.getContext('2d');c.fillStyle='#173e39';c.fillRect(0,0,768,400);c.fillStyle=accent;c.fillRect(0,0,768,24);c.fillRect(0,376,768,24);c.strokeStyle='#ffffff99';c.lineWidth=8;c.strokeRect(17,17,734,366);c.fillStyle='#fffaf0';c.textAlign='center';c.textBaseline='middle';c.font='900 93px system-ui,sans-serif';let str=[...text],lines=[];if(str.length>7){const mid=Math.ceil(str.length/2);lines=[str.slice(0,mid).join(''),str.slice(mid).join('')]}else lines=[text];if(lines.length===1)c.fillText(lines[0],384,203,685);else{c.font='900 83px system-ui,sans-serif';c.fillText(lines[0],384,151,686);c.fillText(lines[1],384,266,686)}const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
+    function clearGate(){if(!state.gateRoot)return;state.gateRoot.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.dispose();m.dispose()}}});scene.remove(state.gateRoot);state.gateRoot=null}
+    function createGate(){clearGate();const q=state.questions[state.index],root=new THREE.Group();root.position.z=state.gateZ;scene.add(root);state.gateRoot=root;
+      for(let i=0;i<3;i++){const lane=new THREE.Group();lane.position.x=lanes[i];root.add(lane);const col=colors[i],accent=['#81bce1','#f5c98b','#c7abe9'][i],post=material(col,.42),base=material(0xfff1cd);
+        make(new THREE.BoxGeometry(.105,1.22,.14),post,lane,-.66,.62,0);make(new THREE.BoxGeometry(.105,1.22,.14),post,lane,.66,.62,0);make(new THREE.BoxGeometry(1.39,.12,.17),post,lane,0,1.23,0);
+        const sign=make(new THREE.PlaneGeometry(1.31,.71),new THREE.MeshBasicMaterial({map:labelTexture(q.options[i],accent),side:THREE.DoubleSide}),lane,0,1.70,.06);sign.castShadow=false;
+        const pad=make(new THREE.BoxGeometry(1.33,.014,1.42),new THREE.MeshStandardMaterial({color:col,roughness:.9}),lane,0,.037,.3);pad.castShadow=false;
+        for(const dx of [-.66,.66])make(new THREE.SphereGeometry(.11,10,8),base,lane,dx,1.24,0);
+      }
+    }
+    function showQuestion(){const q=state.questions[state.index];state.gateZ=catRoot.position.z-18;createGate();state.lane=1;selectLane(1);$('questionNo').textContent=`QUESTION ${String(state.index+1).padStart(2,'0')} / 05  ·  ${q.type}`;$('prompt').textContent=q.prompt;$('score').textContent=`⭐ ${state.correct} / 5`;$('progress').style.width=`${state.index*20}%`;for(let i=0;i<3;i++)$('answer'+i).textContent=q.options[i];$('distance').textContent='ゲートまで 18m'}
+    function begin(){state.level=Number($('level').value)||1;state.questions=RAW_QUESTIONS[state.level-1].map(shuffleChoices);state.index=0;state.correct=0;state.answers=[];state.startedAt=new Date().toISOString();state.mode='running';catRoot.position.set(0,0,0);catRoot.rotation.y=Math.PI;walkTime=0;stepTime=0;blend=0;$('loadingOverlay').classList.add('hidden');$('settingsOverlay').classList.add('hidden');$('results').classList.add('hidden');$('hud').classList.add('show');$('feedback').classList.remove('show');if(window.KotobaCatRaceIntegration)window.KotobaCatRaceIntegration.begin(state.level);showQuestion()}
+    function startOnTap(){if(state.mode!=='ready')return;unlockAudio();begin()}
+    $('tapToStart').addEventListener('click',startOnTap);
+    $('loadingOverlay').addEventListener('click',startOnTap);
+    function celebrate(){for(let i=0;i<16;i++){const m=make(new THREE.IcosahedronGeometry(.035+random()*.045,0),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(random(),.8,.65)}),scene,catRoot.position.x, .25+random()*.8,catRoot.position.z);state.particles.push({mesh:m,t:0,vx:(random()-.5)*3,vy:.8+random()*2,vz:(random()-.5)*2})}}
+    function passGate(){if(state.mode!=='running')return;const q=state.questions[state.index],picked=lanes.reduce((b,x,i)=>Math.abs(catRoot.position.x-x)<Math.abs(catRoot.position.x-lanes[b])?i:b,0),success=picked===q.answer;
+      if(success){state.correct++;celebrate();sound(660,.17,'sine',.09);setTimeout(()=>sound(920,.19,'sine',.09),110)}else sound(220,.27,'triangle',.065);
+      if(window.KotobaCatRaceIntegration)window.KotobaCatRaceIntegration.answer(q,success);
+      state.answers.push({prompt:q.prompt,selected:q.options[picked],right:q.options[q.answer],success,explain:q.explain});$('feedbackTitle').textContent=success?'✨ 正解！':'🌱 おしい！';$('feedbackText').textContent=success?`「${q.options[picked]}」正解のゲートを通過！`:`正解は「${q.options[q.answer]}」`;$('feedbackExplain').textContent=q.explain;$('feedback').classList.toggle('wrong',!success);$('feedback').classList.add('show');state.feedbackTime=0;state.mode='feedback';$('score').textContent=`⭐ ${state.correct} / 5`;$('progress').style.width=`${(state.index+1)*20}%`}
+    function finish(){
+      state.mode='results';clearGate();$('feedback').classList.remove('show');$('hud').classList.remove('show');
+      const integration=window.KotobaCatRaceIntegration?window.KotobaCatRaceIntegration.finish({startedAt:state.startedAt,answers:state.answers,score:state.correct,total:5}):null;
+      const medals=integration?integration.medals:0;
+      $('finalScore').textContent=`${state.correct} / 5`;
+      $('reward').textContent=`🏅 獲得メダル +${medals}${integration&&!integration.medalSaved?'（メダルの保存に失敗しました）':''}`;
+      const progress=integration&&integration.mastery;
+      $('masteryInfo').textContent=progress?`Lv.${progress.level} 熟練度 ${progress.before} → ${progress.points}/100（+${progress.earned}）${progress.raised?' 🎉 次のレベルが解放されました！':''}`:'難易度・熟練度を確認できませんでした';
+      if(integration&&!integration.recordSaved)$('masteryInfo').textContent+=' ※トレーニング記録を保存できませんでした';
+      $('review').replaceChildren();state.answers.forEach((a,i)=>{const row=document.createElement('div');row.className='result-row';const heading=document.createElement('strong');heading.textContent=`${a.success?'✅':'❌'} ${i+1}. ${a.prompt}`;const detail=document.createElement('span');detail.textContent=`あなたの回答：${a.selected}　正解：${a.right}`;const why=document.createElement('span');why.textContent=`復習ポイント：${a.explain}`;row.append(heading,detail,why);$('review').appendChild(row)});
+      updateLevelOptions();$('results').classList.remove('hidden');
+    }
+    function speak(){const q=state.questions[state.index];if(!q||!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(`${q.prompt}。左、${q.options[0]}。中央、${q.options[1]}。右、${q.options[2]}。`);u.lang='ja-JP';u.rate=.86;window.speechSynthesis.speak(u)}
+    let lastRenderAt=0;function frame(){requestAnimationFrame(frame);const now=performance.now();if(document.hidden||now-lastRenderAt<(innerWidth<780?1000/30:1000/45))return;lastRenderAt=now;const dt=Math.min(clock.getDelta(),.045);const running=state.mode==='running';if(running){catRoot.position.z-=3.8*dt;catRoot.position.x=THREE.MathUtils.damp(catRoot.position.x,lanes[state.lane],9,dt);const remaining=Math.max(0,catRoot.position.z-state.gateZ);$('distance').textContent=`ゲートまで ${Math.ceil(remaining)}m`;if(remaining<=.15)passGate()}
+      else if(state.mode==='feedback'){state.feedbackTime+=dt;if(state.feedbackTime>2.05){$('feedback').classList.remove('show');state.index++;if(state.index>=5)finish();else{state.mode='running';showQuestion()}}}
+      animatedCat(dt,running);for(let i=state.particles.length-1;i>=0;i--){const p=state.particles[i];p.t+=dt;p.mesh.position.x+=p.vx*dt;p.mesh.position.y+=p.vy*dt;p.mesh.position.z+=p.vz*dt;p.vy-=4.5*dt;if(p.t>1.25){scene.remove(p.mesh);p.mesh.geometry.dispose();p.mesh.material.dispose();state.particles.splice(i,1)}}
+      const wanted=new THREE.Vector3(catRoot.position.x*.33,1.66,catRoot.position.z+3.45);camera.position.lerp(wanted,Math.min(1,dt*6.5));camera.lookAt(catRoot.position.x*.2,.78,catRoot.position.z-5.7);renderer.render(scene,camera)}
+    document.querySelectorAll('[data-lane]').forEach(b=>b.addEventListener('click',()=>selectLane(Number(b.dataset.lane))));
+    addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(e.code)){e.preventDefault();if(!e.repeat){if(e.code==='ArrowLeft'||e.code==='KeyA')selectLane(state.lane-1);else selectLane(state.lane+1)}}});
+    function unlockAudio(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;soundContext??=new A();soundContext.resume().catch(()=>{})}catch(_){} }
+    document.addEventListener('pointerdown',unlockAudio,{passive:true});document.addEventListener('keydown',unlockAudio);
+    let settingsPreviousMode='running';
+    function openSettings(){if(!['running','results'].includes(state.mode))return;settingsPreviousMode=state.mode;state.mode='paused';updateLevelOptions();$('results').classList.add('hidden');$('settingsOverlay').classList.remove('hidden')}
+    function closeSettings(){if(state.mode!=='paused')return;$('settingsOverlay').classList.add('hidden');state.mode=settingsPreviousMode;if(state.mode==='results')$('results').classList.remove('hidden')}
+    $('again').addEventListener('click',begin);$('levelBack').addEventListener('click',openSettings);$('settings').addEventListener('click',openSettings);
+    $('applySettings').addEventListener('click',()=>{if(window.KotobaCatRaceIntegration)window.KotobaCatRaceIntegration.setLevel(Number($('level').value));begin()});
+    $('cancelSettings').addEventListener('click',closeSettings);$('speak').addEventListener('click',speak);$('mute').addEventListener('click',()=>{soundOn=!soundOn;$('mute').textContent=soundOn?'♪ ON':'♪ OFF'});
+    const back=()=>window.location.href='index.html?v=veta24#3d-games';
+    $('settingsBack').addEventListener('click',back);$('backToGenres').addEventListener('click',back);
+    try{initScene()}catch(e){fail(e?.message||'この端末では3Dゲームを表示できません。')}
+  </script>
+</body>
+</html>

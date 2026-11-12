@@ -1,0 +1,26 @@
+{
+  "id": "./index.html",
+  "name": "ことばクエスト ver1.2.1",
+  "short_name": "ことばクエスト",
+  "description": "ことばクエスト ver1.2.1：ことば・朗読・想起・発話の練習",
+  "lang": "ja-JP",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8dc",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "images/app-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

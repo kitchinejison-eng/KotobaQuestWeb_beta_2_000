@@ -1,0 +1,31 @@
+ことばクエスト ver1.2.1｜使用素材・クレジットについて
+作成：2026-11-12
+
+【画面で読む】
+アプリの「設定」→「使用素材・クレジット・ライセンスを見る」、
+または credits.html を直接開いてください。
+
+【素材の制作元（制作者申告）】
+画像制作の一部：ChatGPT（OpenAI）／Gemini（Google）
+効果音：効果音ラボ https://soundeffect-lab.info/
+BGM：甘茶の音楽工房 https://amachamusic.chagasi.com/
+
+【3Dモデル】
+Shiba Inu by Quaternius, CC0 1.0, https://poly.pizza/m/y4wdQpg767
+Bicolor Cat by kenchoo, CC BY 4.0,
+https://sketchfab.com/3d-models/bicolor-cat-e623a618ca344a8393d7ba4d63ec23cf
+原作: 3d modelling my cat: Fripouille by guillaume bolis, CC BY 4.0,
+https://skfb.ly/6TKqH
+改変：3D猫の毛色テクスチャの変更、ゲーム用GLBへの変換。
+
+【ライブラリ、同梱の権利表示】
+Three.js / vendor/three/LICENSE （MIT）
+JLect JHR / ocr/JLECT_LICENSE.txt （CC BY-SA 3.0、改変内容を含む）
+Tesseract.js / ocr/vendor/TESSERACT_JS_LICENSE.md （Apache-2.0）
+Tesseract Core / ocr/vendor/TESSERACT_CORE_LICENSE.txt （Apache-2.0）
+Unicode Unihan / LICENSE_UNICODE_DATA_v92.txt （Unicode Data License）
+Font Awesome Free 6.7.2 / 既存配布物の fontawesome/css/all.min.css 冒頭および
+https://fontawesome.com/license/free （アイコン CC BY 4.0、フォント SIL OFL 1.1、CSS MIT）
+
+注意：この一覧は個別音源・画像すべての由来を検証した保証書ではありません。
+素材単体の再販売・再配布など、各配布元の規約で禁止された用途には利用しないでください。

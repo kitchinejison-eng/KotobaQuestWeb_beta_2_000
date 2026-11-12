@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#8bd3f0">
+<title>ことばクエスト 開発版｜ピクトグラム ○× 3Dクイズ</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8bd3f0;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;touch-action:none}
+#view{position:fixed;inset:0}canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#hud{position:fixed;inset:0;pointer-events:none;color:white;text-shadow:0 2px 4px #123}
+.top{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px}
+.pill{background:#142b40df;border:1px solid #ffffff66;border-radius:12px;padding:8px 12px;font-size:clamp(12px,1.6vw,16px);font-weight:900}
+.pill span{color:#ffe17c}
+#qbox{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:min(720px,92vw);padding:11px 15px;border-radius:15px;text-align:center;background:#142b40e8;border:1px solid #ffffff70}
+#qbox small{display:block;font-size:11px;letter-spacing:.12em;color:#bfeaff}
+#question{font-size:clamp(18px,2.8vw,26px);font-weight:950;margin:5px 0}
+#hint{font-size:12px;color:#d8efff}
+#help{position:absolute;bottom:12px;right:12px;max-width:min(520px,54vw);background:#142b40dc;border-radius:11px;padding:9px 12px;font-size:12px;line-height:1.6}
+#mobileHelp{display:none}
+#touch{display:block;position:absolute;left:14px;bottom:14px;width:224px;height:132px;pointer-events:none;z-index:2}
+#base{position:absolute;left:0;bottom:0;width:112px;height:112px;border:2px solid #ffffff99;background:#142b4077;border-radius:50%;pointer-events:auto;touch-action:none;cursor:grab}
+#knob{position:absolute;left:31px;top:31px;width:46px;height:46px;border-radius:50%;border:3px solid #35536b;background:#e8f7ffed;pointer-events:none}
+#actions{position:absolute;left:122px;bottom:0;display:flex;flex-direction:column;gap:7px;pointer-events:auto}
+#jump{position:static;width:88px;height:49px;border:2px solid white;border-radius:14px;background:#ffbd43;color:#3a290d;font-weight:1000;pointer-events:auto;touch-action:none;box-shadow:0 3px 0 #95631d}
+#actions .action-ja{display:none}
+.pause-pill{border:1px solid #ffffff77;color:#fff;background:#142b40df;cursor:pointer;pointer-events:auto}
+.pause-pill:disabled{opacity:.45;cursor:not-allowed}
+.overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px;background:#09182dbb}
+.panel{width:min(520px,100%);padding:27px 22px;border-radius:22px;text-align:center;color:white;background:linear-gradient(155deg,#24445d,#10243a);border:1px solid #ffffff77;box-shadow:0 20px 70px #0008}
+#result .panel{max-height:calc(100dvh - 28px);overflow-y:auto;overscroll-behavior:contain}
+.panel h1{font-size:clamp(29px,7vw,44px);line-height:1.2;margin:0 0 12px}.panel p{line-height:1.75;color:#e4f2fc}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+.action{border:0;border-radius:13px;padding:15px 28px;min-width:210px;background:linear-gradient(#ffe779,#ffb537);color:#3a280b;font-weight:1000;font-size:19px;box-shadow:0 5px 0 #a66b1c}
+.action:active{transform:translateY(3px);box-shadow:0 2px 0 #a66b1c}
+.hidden{display:none!important}
+#status{font-size:12px;color:#c2e1f6;min-height:18px;margin-top:12px}
+.pictogram-settings { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 16px;text-align:left; }
+.pictogram-settings label { display:grid;gap:6px;font-size:12px;font-weight:900; }
+.pictogram-settings select { display:block;width:100%;min-height:46px;padding:6px;border:2px solid #c9d8e4;border-radius:9px;background:#fff;color:#19364a;font-size:17px; }
+#restartFromPauseBtn { display:block;min-width:0;width:100%;margin-top:11px;background:linear-gradient(#e7f0ff,#b4d3ff);font-size:15px; }
+#retryLoad[hidden] { display:none; }
+@media(max-width:390px){.pictogram-settings{grid-template-columns:1fr;}}
+#toast{position:fixed;z-index:8;top:48%;left:50%;transform:translate(-50%,-50%);padding:14px 24px;border-radius:15px;background:#142b40ef;border:2px solid white;font-size:clamp(24px,5vw,34px);font-weight:1000;opacity:0;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+#answerExplanation3d {margin-top:8px;padding:9px;border-radius:9px;background:#f1f8ff;color:#153a5f;
+ font-size:clamp(14px,2.2vw,18px);line-height:1.55;font-weight:800;overflow-wrap:anywhere;}
+@media(max-width:760px){#help{display:none}#mobileHelp{display:block;position:absolute;right:8px;bottom:12px;left:8px;right:auto;bottom:145px;max-width:220px;background:#142b40dc;border-radius:10px;padding:8px;font-size:10px;line-height:1.5}#touch{left:8px;bottom:8px;transform:scale(.9);transform-origin:bottom left}.top{left:6px;right:6px;gap:3px}.top>.pill{font-size:10px;padding:6px 5px;min-width:0;flex:1 1 auto;text-align:center}.top>.pause-pill{flex:0 0 auto;white-space:nowrap}#qbox{top:54px;width:94vw;padding:8px 10px}}
+@media(orientation:landscape) and (max-height:500px){#qbox{top:45px;width:58vw;padding:6px}#qbox small,#hint{display:none}#question{font-size:17px}.top{top:4px}#touch{transform:scale(.74);transform-origin:bottom left;bottom:4px;left:6px}#mobileHelp{font-size:9px}}
+#npcCoach2D{position:fixed;z-index:3;right:12px;top:165px;display:flex;align-items:center;gap:6px;padding:5px 10px 5px 4px;border:2px solid #fff;background:#fffdf3eb;color:#1a4c5b;border-radius:40px;box-shadow:0 3px 12px #1236;font-size:12px;font-weight:900;pointer-events:none}#npcCoach2D img{width:52px;height:52px;object-fit:contain}#npcCoach2D span{max-width:116px}@media(max-width:760px){#npcCoach2D{top:145px;right:6px;font-size:10px;padding:3px 7px 3px 2px}#npcCoach2D img{width:38px;height:38px}#npcCoach2D span{max-width:70px}}@media(orientation:landscape) and (max-height:500px){#npcCoach2D{top:100px}}
+/* Ver_beta_6: phone layout only. Keep tablet/desktop 3D HUD and controls unchanged. */
+@media (max-width:480px) and (orientation:portrait) {
+  .top{top:calc(5px + env(safe-area-inset-top,0px));left:7px;right:7px;gap:5px}
+  .top>.pill{padding:7px 6px;min-height:38px;font-size:11px;border-radius:9px}
+  .top>.pill:nth-child(3){display:none}
+  .top>.pause-pill{min-width:88px}
+  #qbox{top:calc(49px + env(safe-area-inset-top,0px));width:calc(100vw - 14px);max-height:32dvh;padding:8px 9px;border-radius:13px;overflow-y:auto;overflow-wrap:anywhere;pointer-events:auto}
+  #qbox small{font-size:10px;letter-spacing:.05em}
+  #question{font-size:clamp(15px,4.2vw,18px);line-height:1.3;margin:4px 0}
+  #hint{display:none}
+  #npcCoach2D{top:auto;right:7px;bottom:calc(186px + env(safe-area-inset-bottom,0px));max-width:130px;padding:2px 5px 2px 2px;font-size:10px}
+  #npcCoach2D img{width:33px;height:33px}
+  #npcCoach2D span{max-width:73px;line-height:1.2}
+  #mobileHelp{left:auto;right:8px;bottom:calc(128px + env(safe-area-inset-bottom,0px));width:auto;max-width:192px;max-height:42vh;overflow-y:auto;padding:6px 10px;pointer-events:auto;font-size:11px}
+  #mobileHelp summary{cursor:pointer;list-style:revert;font-weight:900}
+  #mobileHelp .mobile-help-details{margin-top:6px;line-height:1.5}
+  #touch{left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(7px + env(safe-area-inset-bottom,0px));transform:scale(.9)}
+  #jump{min-height:52px}
+  #actions .action-en{display:none}
+  #actions .action-ja{display:inline}
+  #pauseOverlay .panel{width:100%;max-height:calc(100dvh - 16px);overflow-y:auto;overscroll-behavior:contain;padding:15px 14px;border-radius:16px}
+}
+@media (orientation:landscape) and (max-height:480px) and (max-width:950px) and (pointer:coarse) {
+  #pauseOverlay .panel{max-height:calc(100dvh - 12px);overflow-y:auto;overscroll-behavior:contain;padding:12px}
+  #mobileHelp{left:auto;right:8px;bottom:10px;max-width:155px;padding:5px 7px;pointer-events:auto}
+  #mobileHelp summary{font-weight:900;cursor:pointer}
+  #npcCoach2D{top:auto;right:6px;bottom:70px;padding:2px 5px;font-size:10px}
+  #npcCoach2D img{width:29px;height:29px}
+  #npcCoach2D span{max-width:60px}
+  #qbox{max-height:42dvh;overflow-y:auto;pointer-events:auto}
+}
+</style>
+<link rel="stylesheet" href="styles/ui/veta14-ui.css?v=2">
+<link rel="stylesheet" href="styles/ui/veta17-theme.css?v=2">
+<link rel="stylesheet" href="styles/ui/daily-streak.css?v=108">
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+<div id="view"></div>
+<div id="npcCoach2D" aria-label="ねこまる"><img src="images/story/cat_1_crop.png" alt="ねこまる"><span>ねこまるが応援中！</span></div>
+<div id="hud">
+ <div class="top"><div class="pill">問題 <span id="qnum">0 / 5</span></div><div class="pill">スコア <span id="score">0</span></div><div class="pill">PICTOGRAM 3D</div><button class="pill pause-pill" id="pauseBtn" type="button" disabled>Ⅱ 一時停止・設定</button></div>
+ <div id="qbox"><small id="worldTypeLabel">RANDOM WORLD · ○× QUIZ</small><div id="question">3Dワールドを準備中…</div><div id="hint">正しいと思うエリアへ走っていこう！</div><div id="answerExplanation3d" class="hidden" role="status" aria-live="polite"></div></div>
+ <div id="help">PC：WASD／矢印キーで常時ダッシュ、Pで一時停止<br>マウス：左下スティックをドラッグして移動、ゲーム画面をドラッグして視点変更</div>
+ <details id="mobileHelp"><summary>操作方法</summary><div class="mobile-help-details">左下スティック：常時ダッシュで移動<br>ゲーム画面スワイプ：視点変更<br>ジャンプ・一時停止ボタンを使用</div></details>
+ <div id="touch"><div id="base" aria-label="移動スティック"><div id="knob"></div></div><div id="actions"><button id="jump" type="button"><span class="action-en">JUMP</span><span class="action-ja">ジャンプ</span></button></div></div>
+</div>
+<div class="overlay" id="loading"><div class="panel"><h1>🟢 3Dワールドを準備しています…</h1><p>準備ができると自動でクイズが始まります。</p><p id="status" role="status">読み込み中です。少しお待ちください。</p><button class="action" id="retryLoad" type="button" hidden>再読み込み</button></div></div>
+<div class="overlay hidden" id="pauseOverlay"><div class="panel"><h1>一時停止・設定</h1><p>問題数と難易度は次の挑戦から反映されます。</p><div class="pictogram-settings"><label for="pictogramLevelSelect">挑戦する難易度（解放済み）<select id="pictogramLevelSelect"></select></label><label for="pictogramQuestionCount">1回の問題数<select id="pictogramQuestionCount"><option value="5">5問</option><option value="10">10問</option><option value="15">15問</option><option value="20">20問</option></select></label></div><button class="action" id="resumeBtn" type="button">ゲームに戻る</button><button class="action" id="restartFromPauseBtn" type="button">設定を反映して再挑戦</button><br><button id="pauseBackBtn" type="button" style="margin-top:14px;border:1px solid #ffffff77;border-radius:12px;padding:11px 20px;background:#18364a;color:#fff;font-weight:800">ジャンル選択へ戻る</button></div></div>
+<div class="overlay hidden" id="result"><div class="panel"><h1>クイズ終了！</h1><h1 id="finalScore">0 / 4</h1><p id="resultText"></p><div id="pictogramMastery" class="v14-mastery-result" hidden><strong id="pictogramMasteryTitle">Lv.1 熟練度</strong><span id="pictogramMasteryText">0 / 100</span><div class="v14-mastery-track"><div id="pictogramMasteryBar"></div></div><p id="pictogramMasteryUnlock"></p></div><p id="medalReward" class="hidden" style="font-size:22px;color:#ffe17c;font-weight:900">🏅 メダル +5</p><div id="pictogramQuestionResults" style="margin:10px 0;padding:8px;background:#214b63;border-radius:10px;text-align:left;max-height:30vh;overflow:auto"></div><div id="pictogramDailyStreak" class="daily-streak-slot"></div><button class="action" id="retry" type="button">もう一度プレイ</button><br><button id="backToGenres" type="button" style="margin-top:14px;border:1px solid #ffffff77;border-radius:12px;padding:11px 20px;background:#18364a;color:#fff;font-weight:800">ジャンル選択へ戻る</button></div></div>
+<div id="toast"></div>
+<script src="scripts/system/daily-streak.js?v=108"></script>
+<script src="scripts/audio/kotoba-sound-pack-v2.js?v=22"></script>
+<script src="scripts/system/user-profile.js?v=veta16-profile"></script>
+<script src="scripts/learning/learning-mode-veta12.js?v=1"></script>
+<script src="scripts/learning/adaptive-learning.js?v=veta12"></script>
+<script src="scripts/learning/unified-learning-veta1.js?v=veta12"></script>
+<script src="scripts/learning/difficulty-veta11.js?v=1"></script>
+<script src="scripts/ui/veta14-theme-sync.js?v=veta17"></script>
+<script src="scripts/questions/fact-bank-veta11.js?v=2"></script>
+<script>
+const $=id=>document.getElementById(id);
+if(window.KotobaLevels){const el=$('pictogramLevelSelect');const p=window.KotobaLevels.get('pictogram3d');for(let i=1;i<=p.unlocked;i++){const o=document.createElement('option');o.value=String(i);o.textContent='Lv.'+i;el.appendChild(o)}el.value=String(p.selected);el.addEventListener('change',()=>window.KotobaLevels.select('pictogram3d',Number(el.value)))}
+function getPictogramCount(){let n=5;try{n=Number(localStorage.getItem('kotobaquest_pictogram_count_v15')||localStorage.getItem('kotobaquest_question_count_v15')||5)}catch(_){}return [5,10,15,20].includes(n)?n:5;}
+$('pictogramQuestionCount').value=String(getPictogramCount());
+$('pictogramQuestionCount').addEventListener('change',()=>{try{localStorage.setItem('kotobaquest_pictogram_count_v15',$('pictogramQuestionCount').value)}catch(_){}});
+$('retryLoad').addEventListener('click',()=>window.location.reload());
+$('restartFromPauseBtn').addEventListener('click',()=>window.startQuiz&&window.startQuiz());
+$('retry').addEventListener('click',()=>window.startQuiz&&window.startQuiz());
+function goToGenres(){try{if(window.stop3DGameAudio)window.stop3DGameAudio();}catch(_){}window.location.href='index.html?v=89#home';}
+$('backToGenres').addEventListener('click',goToGenres);
+$('pauseBackBtn').addEventListener('click',goToGenres);
+</script>
+<script src="scripts/3d/pc-3d-guide.js"></script>
+<script src="vendor/three/three-classic-pc.js"></script>
+<script src="scripts/3d/pictogram-world-classic-pc.js"></script>
+<script>
+(async()=>{
+try{
+const THREE=window.THREE;
+const buildPictogramWorld=window.KQBuildPictogramWorld;
+if(!THREE||!buildPictogramWorld)throw Error('PC用3Dエンジンを読み込めませんでした。ZIPをすべて展開してください。');
+const BIOMES=[{name:'草原',sky:0x91d8f5,fog:0xb5e6f2,ground:0x64b84d,path:0xd9bd83,leaf:0x2e8d45},{name:'ビーチ',sky:0x72d5f5,fog:0xb3e9f5,ground:0xe8d28e,path:0xf8e6b6,leaf:0x24a66b},{name:'牧場',sky:0x9bdcf5,fog:0xc8e9d6,ground:0x83bd5b,path:0xc9a875,leaf:0x398f42},{name:'森',sky:0x83c7d8,fog:0x91b9a5,ground:0x477d45,path:0x9d8966,leaf:0x245b39}];
+const currentBiome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
+const root=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color(currentBiome.sky);scene.fog=new THREE.Fog(currentBiome.fog,95,245);
+$('worldTypeLabel').textContent=currentBiome.name+' WORLD · ○× QUIZ';
+const camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,260);
+const renderer=new THREE.WebGLRenderer({antialias:innerWidth>=780,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,innerWidth<780?1.2:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=innerWidth>=780;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;root.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe8f8ff,0x668b45,1.85));const sun=new THREE.DirectionalLight(0xffedcb,2.45);sun.position.set(-28,42,24);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<780?1024:2048,innerWidth<780?1024:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00015;scene.add(sun);
+const mat=(c,rough=0.8)=>new THREE.MeshStandardMaterial({color:c,roughness:rough});
+const green=mat(0x198f45,.78),white=mat(0xffffff,.55),red=mat(0xe94f58,.55),dark=mat(0x233445),skin=mat(0x00a85a,.7),accent=mat(0x69d9a2,.6);
+function addBox(w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.receiveShadow=true;o.castShadow=true;scene.add(o);return o}
+function cylinder(r1,r2,h,m,x,y,z,segments=32){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,segments),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+// マップの外観を独立した軽量な3D景観ビルダーで生成。
+const world=buildPictogramWorld(THREE,scene,currentBiome,renderer);
+// Answer zones with large clean circular marks and readable floating labels.
+const answerZones=[{x:-9,z:-18,value:true},{x:9,z:-18,value:false}];
+function labelTexture(symbol,label,color){const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d');g.fillStyle='#18364a';g.fillRect(0,0,512,256);g.strokeStyle=color;g.lineWidth=12;g.strokeRect(8,8,496,240);g.fillStyle='#fff';g.textAlign='center';g.font='bold 115px sans-serif';g.fillText(symbol,256,130);g.font='bold 38px sans-serif';g.fillText(label,256,207);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+for(const a of answerZones){const color=a.value?0x21b985:0xee5262;const base=mat(color,.55);cylinder(4.8,4.8,.35,mat(0x536773),a.x,.15,a.z);cylinder(4.55,4.55,.16,base,a.x,.4,a.z);
+if(a.value){const t=new THREE.Mesh(new THREE.TorusGeometry(1.7,.3,18,64),white);t.rotation.x=Math.PI/2;t.position.set(a.x,.55,a.z);t.castShadow=true;scene.add(t)}else{for(const ang of [-Math.PI/4,Math.PI/4]){const b=new THREE.Mesh(new THREE.BoxGeometry(3.9,.28,.48),white);b.position.set(a.x,.58,a.z);b.rotation.y=ang;b.castShadow=true;scene.add(b)}}
+const signMat=new THREE.MeshBasicMaterial({map:labelTexture(a.value?'○':'×',a.value?'ただしい':'まちがい',a.value?'#42e7a9':'#ff7a86'),side:THREE.DoubleSide});const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.4,2.2),signMat);sign.position.set(a.x,5.0,a.z-2.5);scene.add(sign);cylinder(.12,.12,2.8,mat(0x708995),a.x,1.8,a.z-2.5,12)}
+// V105: match the supplied green pictogram: round head, raised V arms, spread legs,
+// no eyes, clothes, or separate skin tones. Only the pose changes when running.
+const player=new THREE.Group();scene.add(player);const person=new THREE.Group();player.add(person);
+function sphere(parent,r,m,x,y,z,scaleY=1){const o=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),m);o.position.set(x,y,z);o.scale.y=scaleY;o.castShadow=true;parent.add(o);return o}
+sphere(person,.30,green,0,2.50,0);
+const torso=new THREE.Mesh(new THREE.CylinderGeometry(.43,.28,1.10,20),green);
+torso.position.set(0,1.63,0);torso.castShadow=true;person.add(torso);
+sphere(person,.39,green,0,2.07,0,.48);
+sphere(person,.28,green,0,1.12,0,.55);
+const armShoulders=[],armElbows=[],legs=[];
+function limbPart(parent,r,len){const part=new THREE.Mesh(new THREE.CapsuleGeometry(r,len-r*2,5,12),green);part.position.y=-len/2;part.castShadow=true;parent.add(part);return part}
+function arm(side){
+ const shoulder=new THREE.Group();shoulder.position.set(side*.33,2.05,0);person.add(shoulder);
+ limbPart(shoulder,.117,.62);
+ const elbow=new THREE.Group();elbow.position.y=-.62;shoulder.add(elbow);
+ limbPart(elbow,.107,.57);
+ armShoulders.push(shoulder);armElbows.push(elbow);
+ shoulder.rotation.z=side*2.16;
+}
+function leg(side){const hip=new THREE.Group();hip.position.set(side*.20,1.18,0);person.add(hip);limbPart(hip,.143,1.24);hip.rotation.z=side*.43;legs.push(hip)}
+arm(-1);arm(1);leg(-1);leg(1);
+// A small green sparkle above the right shoulder, as in the reference image.
+const sparkle=new THREE.Group();sparkle.position.set(.79,2.96,.02);person.add(sparkle);
+const starOutline=[[0,.19],[.07,.07],[.20,0],[.07,-.07],[0,-.20],[-.07,-.07],[-.19,0],[-.07,.07],[0,.19]];
+const starCurve=new THREE.CatmullRomCurve3(starOutline.map(([x,y])=>new THREE.Vector3(x,y,0)));
+sparkle.add(new THREE.Mesh(new THREE.TubeGeometry(starCurve,40,.012,5,false),green));
+player.position.set(0,0,17);
+// 既存キャラクター素材をNPCとして再利用。透明PNGのスプライトで草原内に配置します。
+const npcTextureLoader=new THREE.TextureLoader();
+const spriteNpcs=[];
+function addNpcSprite(src,x,z,height,width,label){
+ const texture=npcTextureLoader.load(src);texture.colorSpace=THREE.SRGBColorSpace;
+ const npc=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,alphaTest:.035,depthWrite:false}));
+ npc.position.set(x,height/2,z);npc.scale.set(width,height,1);scene.add(npc);
+ const tagCanvas=document.createElement('canvas');tagCanvas.width=512;tagCanvas.height=128;const ctx=tagCanvas.getContext('2d');
+ ctx.fillStyle='rgba(24,54,74,.92)';ctx.fillRect(8,8,496,112);ctx.strokeStyle='#ffffff';ctx.lineWidth=5;ctx.strokeRect(8,8,496,112);ctx.fillStyle='#fff';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,256,64);
+ const tagTexture=new THREE.CanvasTexture(tagCanvas);tagTexture.colorSpace=THREE.SRGBColorSpace;
+ const tag=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTexture,transparent:true,depthWrite:false}));tag.position.set(x,height+0.9,z);tag.scale.set(4.6,1.15,1);scene.add(tag);
+ spriteNpcs.push({sprite:npc,tag:tag,homeX:x,homeZ:z,height:height,phase:spriteNpcs.length*2.1,radius:2.4+spriteNpcs.length*.6});
+ return npc;
+}
+addNpcSprite('images/story/cat_1_crop.png',-22,-4,7.4,3.9,'チャトラ猫');
+addNpcSprite('images/story/1_oji.png',21,-5,7.0,3.8,'草原の案内人');
+addNpcSprite('images/story/avatar_default_01.png',18,16,5.6,5.2,'町の人');
+
+// V94: low-poly THREE.Group animals. These are actual 3D meshes (not billboard photos).
+const animalNpcs=[];
+function addAnimal(kind,x,z,scale){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);scene.add(g);
+ const add=(mesh,px,py,pz)=>{mesh.position.set(px,py,pz);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return mesh};
+ const ball=(rad,color,x,y,z,sy=1,sx=1,sz=1)=>{const mesh=new THREE.Mesh(new THREE.SphereGeometry(rad,14,10),mat(color));mesh.scale.set(sx,sy,sz);return add(mesh,x,y,z)};
+ const box=(w,h,d,color,x,y,z)=>add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color)),x,y,z);
+ const cone=(radius,height,color,x,y,z,rot=0)=>{const mesh=add(new THREE.Mesh(new THREE.ConeGeometry(radius,height,5),mat(color)),x,y,z);mesh.rotation.z=rot;return mesh};
+ const cat=kind==='cat',cow=kind==='cow',body=cat?0xeab873:cow?0xf8f8f3:0xd9a66d,dark=cat?0xb37b4c:cow?0x35363d:0x825c3d;
+ ball(1.0,body,0,1.55,0,.78,1.15,1.6);
+ for(const xx of [-.62,.62])for(const zz of [-.7,.72])ball(.26,body,xx,.52,zz,1.7,.87,.9);
+ ball(.78,body,0,2.28,1.02,1,1.08,.92);
+ for(const xx of [-.30,.30])ball(.09,0x252c30,xx,2.42,1.64);
+ if(cat){for(const xx of [-.49,.49]){cone(.32,.72,body,xx,3.0,.96);cone(.17,.41,0xf4a5ab,xx,3.05,1.035);}ball(.13,0xed97a0,0,2.14,1.75);}
+ if(kind==='dog'){for(const xx of [-.74,.74]){const ear=ball(.29,dark,xx,2.5,1.04,1.45,.65,.7);ear.rotation.z=xx>0?-.28:.28;}ball(.20,0x3d3534,0,2.12,1.72);ball(.24,0xe9c693,0,1.55,1.74);}
+ if(cow){for(const xx of [-.48,.48]){cone(.18,.64,0xeedc9b,xx,3.0,1.01,xx>0?-.30:.30);ball(.27,0xf5d2c7,xx*.98,2.53,1.02,.6,1.3,.7);}ball(.52,0xf5abb6,0,1.94,1.64,.55,1.15,.65);for(const xx of [-.19,.19])ball(.07,0x7c4b50,xx,1.95,2.0);ball(.52,dark,-.4,1.92,-.78,.22,.9,1.3);ball(.45,dark,.56,1.4,-.2,.3,.8,.9);}
+ const tail=ball(cat?.14:.19,dark,.25,1.6,-1.45,1,1,1);tail.scale.y=1.6;
+ const tagCanvas=document.createElement('canvas');tagCanvas.width=256;tagCanvas.height=96;const tg=tagCanvas.getContext('2d');tg.fillStyle='#18364add';tg.fillRect(3,3,250,90);tg.fillStyle='#fff';tg.font='bold 42px sans-serif';tg.textAlign='center';tg.textBaseline='middle';tg.fillText(cat?'ねこ':cow?'うし':'いぬ',128,48);
+ const tex=new THREE.CanvasTexture(tagCanvas);tex.colorSpace=THREE.SRGBColorSpace;
+ const tag=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));tag.position.set(x,3.95*scale,z);tag.scale.set(2.5*scale,.84*scale,1);scene.add(tag);
+ animalNpcs.push({group:g,tag:tag,baseY:0,homeX:x,homeZ:z,scale:scale,phase:animalNpcs.length*2.2,radius:2.8+animalNpcs.length*.6});
+}
+addAnimal('cat',-30,10,1.05);
+addAnimal('dog',29,8,1.12);
+addAnimal('cow',29,-23,1.48);
+
+let yaw=0,pitch=.13,drag=false,lastX=0,lastY=0;
+const canvas=renderer.domElement;
+canvas.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;lastY=e.clientY;try{canvas.setPointerCapture(e.pointerId)}catch(_){}});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch+dy*.002,-.3,.7)});
+function stopDrag(){drag=false}canvas.addEventListener('pointerup',stopDrag);canvas.addEventListener('pointercancel',stopDrag);canvas.addEventListener('lostpointercapture',stopDrag);
+const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '&&playing)jump();if((e.key==='p'||e.key==='P'||e.key==='Escape')&&playing){e.preventDefault();if(paused)resumeGame();else pauseGame();}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);});
+let sx=0,sy=0,pid=null;const base=$('base'),knob=$('knob');base.addEventListener('pointerdown',e=>{e.preventDefault();pid=e.pointerId;try{base.setPointerCapture(pid)}catch(_){};stick(e)});base.addEventListener('pointermove',e=>{if(e.pointerId===pid)stick(e)});function stick(e){const r=base.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),n=Math.hypot(dx,dy),max=38;if(n>max){dx=dx/n*max;dy=dy/n*max}sx=dx/max;sy=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`}function endStick(e){if(e.pointerId!==pid)return;pid=null;sx=sy=0;knob.style.transform='translate(0,0)'}base.addEventListener('pointerup',endStick);base.addEventListener('pointercancel',endStick);base.addEventListener('lostpointercapture',endStick);
+let playing=false,paused=false,locked=false,ground=true,vy=0,jumpQueued=false,idx=0,score=0,toastTimer=0,medalAwarded=false;
+// 正解・不正解は既存のクイズ効果音を使用。歩行音はWeb Audioで短い足音を生成します。
+const correctSfx=new Audio('sounds/quiz-correct-3.mp3'),wrongSfx=new Audio('sounds/quiz-wrong-1.mp3');
+correctSfx.preload='auto';wrongSfx.preload='auto';
+function get3DVolume(channel){
+  let master=.6,settings={};
+  try{
+    const saved=localStorage.getItem('kotobaquest_volume_v3');
+    if(saved!==null && Number.isFinite(Number(saved)))master=Math.max(0,Math.min(1,Number(saved)/100));
+    settings=JSON.parse(localStorage.getItem('kotobaquest_audio_v86')||'{}');
+  }catch(_){settings={};}
+  if(channel==='se' && settings.seOn===false)return 0;
+  const item=channel==='bgm'?'bgm':'se',rawLevel=Number(settings[item]==null?100:settings[item]);
+  const level=Number.isFinite(rawLevel)?rawLevel:100;
+  return Math.max(0,Math.min(1,master*Math.max(0,Math.min(1,level/100))));
+}
+let stepAudioContext=null,stepNoiseBuffer=null,stepToggle=false,stepTimer=0;
+let gameBgmTimer=null,gameBgmStep=0;
+// 草原を冒険する雰囲気の、軽やかなオリジナルBGM（Web Audioで生成）
+const gameBgmNotes=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,523.25,659.25,783.99,987.77,880,783.99,659.25,587.33];
+function playBgmNote(){if(!stepAudioContext||stepAudioContext.state!=='running')return;const mix=get3DVolume('bgm');if(mix<=0)return;const now=stepAudioContext.currentTime,f=gameBgmNotes[gameBgmStep%gameBgmNotes.length];gameBgmStep++;const osc=stepAudioContext.createOscillator(),gain=stepAudioContext.createGain();osc.type='sine';osc.frequency.setValueAtTime(f,now);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.027*mix,now+.035);gain.gain.exponentialRampToValueAtTime(.0001,now+.34);osc.connect(gain);gain.connect(stepAudioContext.destination);osc.start(now);osc.stop(now+.36);if(gameBgmStep%4===0){const bass=stepAudioContext.createOscillator(),bg=stepAudioContext.createGain();bass.type='triangle';bass.frequency.setValueAtTime(f/4,now);bg.gain.setValueAtTime(.0001,now);bg.gain.exponentialRampToValueAtTime(.018*mix,now+.04);bg.gain.exponentialRampToValueAtTime(.0001,now+.42);bass.connect(bg);bg.connect(stepAudioContext.destination);bass.start(now);bass.stop(now+.44)}}
+function startGameBgm(){stopGameBgm();if(!stepAudioContext)return;try{if(stepAudioContext.state==='suspended')stepAudioContext.resume();gameBgmTimer=setInterval(playBgmNote,390);playBgmNote()}catch(e){}}
+function stopGameBgm(){if(gameBgmTimer){clearInterval(gameBgmTimer);gameBgmTimer=null}}
+function prepareGameAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return; if(!stepAudioContext)stepAudioContext=new AC();if(stepAudioContext.state==='suspended')stepAudioContext.resume();if(!stepNoiseBuffer){const length=Math.floor(stepAudioContext.sampleRate*.09),buffer=stepAudioContext.createBuffer(1,length,stepAudioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);stepNoiseBuffer=buffer;}}catch(e){console.warn('効果音を初期化できません',e)}}
+function playStepSfx(){if(window.KotobaSoundPack&&window.KotobaSoundPack.play('footsteps'))return;if(!stepAudioContext||stepAudioContext.state!=='running')return;const mix=get3DVolume('se');if(mix<=0)return;const now=stepAudioContext.currentTime;const src=stepAudioContext.createBufferSource();src.buffer=stepNoiseBuffer;const filter=stepAudioContext.createBiquadFilter();filter.type='lowpass';filter.frequency.value=420;const gain=stepAudioContext.createGain();gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.11*mix*.55,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+.085);src.connect(filter);filter.connect(gain);gain.connect(stepAudioContext.destination);src.start(now);src.stop(now+.09);const osc=stepAudioContext.createOscillator(),og=stepAudioContext.createGain();osc.type='sine';osc.frequency.setValueAtTime(stepToggle?88:104,now);og.gain.setValueAtTime(.045*mix*.55,now);og.gain.exponentialRampToValueAtTime(.0001,now+.065);osc.connect(og);og.connect(stepAudioContext.destination);osc.start(now);osc.stop(now+.07);stepToggle=!stepToggle}
+function playAnswerSfx(isCorrect){const audio=isCorrect?correctSfx:wrongSfx;try{const mix=get3DVolume('se');if(mix<=0)return;audio.pause();audio.currentTime=0;audio.volume=mix*(isCorrect?.46:.34);const p=audio.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+window.prepareGameAudio=prepareGameAudio;document.addEventListener('pointerdown',prepareGameAudio,{passive:true});document.addEventListener('keydown',prepareGameAudio);
+window.stop3DGameAudio=function(){try{if(correctSfx)correctSfx.pause();if(wrongSfx)wrongSfx.pause();}catch(e){}};
+// VETA10：全20問の問題プールから毎回4問を抽選する。
+const qs=[
+ ['太陽は東から昇る。',true],['タコの足は6本である。',false],
+ ['日本の首都は東京である。',true],['月は太陽の光を反射して光る。',true],
+ ['1週間は8日間である。',false],['イルカは魚の仲間である。',false],
+ ['1メートルは100センチメートルである。',true],['ペンギンは空を飛べる。',false],
+ ['1年は12か月である。',true],['1日は24時間である。',true],
+ ['春の次の季節は冬である。',false],['水は飲み物として使うことがある。',true],
+ ['時計は時刻を確かめる道具である。',true],['靴は手にはめて歩く道具である。',false],
+ ['電車は線路を走る乗り物である。',true],['りんごは文房具の仲間である。',false],
+ ['三角形には角が3つある。',true],['10円玉を2枚合わせると20円になる。',true],
+ ['雨の日には傘を使うことがある。',true],['「ありがとう」は別れのあいさつだけに使う言葉である。',false]
+];
+const original3DReasons=[
+ '日本では太陽はおおむね東の方角から昇って見えます。だから○です。',
+ 'タコの腕は通常8本です。「6本」ではないので×です。',
+ '日本の首都は東京です。文は正しいので○です。',
+ '月が明るく見えるのは太陽の光を反射するためです。だから○です。',
+ '1週間は7日間です。8日ではないので×です。',
+ 'イルカは哺乳類です。魚ではないので×です。',
+ '1メートルは100センチメートルです。単位の換算が合うので○です。',
+ 'ペンギンは鳥ですが、空を飛ぶことはできません。だから×です。',
+ '1年は12か月です。文は正しいので○です。',
+ '1日は24時間です。文は正しいので○です。',
+ '春の次は夏です。冬ではないので×です。',
+ '水は飲み物として使われます。文は正しいので○です。',
+ '時計は時刻を確認する道具です。文は正しいので○です。',
+ '靴は足にはくものです。手にはめるものではないので×です。',
+ '電車は線路を走ります。文は正しいので○です。',
+ 'りんごは果物です。文房具ではないので×です。',
+ '三角形には3つの角があります。文は正しいので○です。',
+ '10円玉2枚は10＋10＝20円です。文は正しいので○です。',
+ '雨の日には雨をよけるために傘を使うことがあります。だから○です。',
+ '「ありがとう」は感謝を伝える言葉です。別れのあいさつだけではないので×です。'
+];
+qs.forEach((q,i)=>{q[3]=original3DReasons[i]});
+(window.KotobaV11Facts||[]).forEach(q=>qs.push(q));
+qs.forEach((q,i)=>{q.difficultyLevel=Number(q[2])||Math.min(10,Math.floor(i/10)+1)});
+let deck=[];let pictogramResults=[];let pictogramStarted=Date.now();let pictogramLevelResult=null;let pictogramAnalysisResult=null;
+function pickPictogramQuestions(pool,count){
+  const learning=window.KotobaUnifiedLearning;
+  const base=learning && learning.isEnabledFor('genres')
+    ? learning.select('genres',pool,'pictogram3d',Math.min(count,pool.length))
+    : pool.slice().sort(()=>Math.random()-.5).slice(0,count);
+  const picked=base.slice();
+  // Lvごとの問題が足りない場合は他の未解放Lvの出題に移らず、復習問題で補う。
+  if(picked.length && picked.length<count){
+    const review=picked.slice().sort(()=>Math.random()-.5);
+    for(let i=0;picked.length<count;i++){
+      const original=review[i%review.length];
+      const repeat=['【復習】'+original[0],original[1],original[2],original[3]];
+      repeat.difficultyLevel=original.difficultyLevel;
+      picked.push(repeat);
+    }
+  }
+  return picked;
+}
+function hud(){ $('qnum').textContent=(idx+1)+' / '+deck.length;$('score').textContent=score;$('question').textContent=deck[idx][0];$('hint').textContent='○か×のエリアに入ると回答できます';$('answerExplanation3d').classList.add('hidden');}
+function startGame(){prepareGameAudio();startGameBgm();stepTimer=0;const lv=window.KotobaLevels?window.KotobaLevels.get('pictogram3d').selected:1;const pool=window.KotobaLevels?window.KotobaLevels.pool(qs,lv):qs;deck=pickPictogramQuestions(pool,getPictogramCount());pictogramLevelResult=null;pictogramAnalysisResult=null;pictogramResults=[];pictogramStarted=Date.now();idx=score=0;medalAwarded=false;playing=true;paused=false;locked=false;yOffset=0;vy=0;ground=true;jumpQueued=false;yaw=0;pitch=.13;gaitPhase=motionBlend=dashBlend=0;person.rotation.y=0;player.position.set(0,0,17);$('loading').classList.add('hidden');$('result').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('pauseBtn').disabled=false;$('pauseBtn').textContent='Ⅱ 一時停止・設定';$('medalReward').classList.add('hidden');if(window.KotobaUnifiedLearning)window.KotobaUnifiedLearning.begin('genres','3D・判断クイズ','pictogram3d');hud()}
+window.startQuiz=startGame;
+// Show the shared mastery meter when the 3D results overlay becomes visible.
+const pictogramMasteryObserver=new MutationObserver(()=>{
+ const result=$('result');if(result.classList.contains('hidden'))return;
+ const p=pictogramLevelResult,box=$('pictogramMastery');box.hidden=!p;if(!p)return;
+ $('pictogramMasteryTitle').textContent='Lv.'+p.level+' 熟練度';
+ $('pictogramMasteryText').textContent=p.points+' / 100 （+'+p.earned+'）';
+ $('pictogramMasteryBar').style.width=Math.max(0,Math.min(100,p.points))+'%';
+ $('pictogramMasteryUnlock').textContent=p.raised?'🎉 Lv.'+p.unlocked+'を解放しました！':'次のレベルまであと'+Math.max(0,100-p.points)+'ポイント';
+});
+pictogramMasteryObserver.observe($('result'),{attributes:true,attributeFilter:['class']});
+function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),1000)}
+function awardMedal(){if(medalAwarded)return 0;medalAwarded=true;const reward=deck.length&&score===deck.length?5:(score>0?1:0);if(!reward)return 0;try{const key='kotobaDungeonSaveV1';let d={};try{d=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(_){}d.medals=Math.max(0,Math.floor(Number(d.medals)||0))+reward;if(!Array.isArray(d.unlockedAvatarIds))d.unlockedAvatarIds=[1,2,3,4];if(!Array.isArray(d.unlockedOutfitIds))d.unlockedOutfitIds=[];if(!Array.isArray(d.history))d.history=[];localStorage.setItem(key,JSON.stringify(d));return reward}catch(e){console.warn('メダルを保存できませんでした',e);return 0}}
+function savePictogramRecord(){try{const date=new Date();const profile=JSON.parse(localStorage.getItem('kotobaquest_user_profile_v1')||'{}');const key='aphasiaTrainingRecordsV4';let list=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(list))list=[];list.push({id:date.getTime()+'-pictogram',date:date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0'),time:date.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),startedAt:new Date(pictogramStarted).toISOString(),finishedAt:date.toISOString(),durationSec:Math.round((Date.now()-pictogramStarted)/1000),category:'ゲーム',genre:'ピクトグラム3D',activity:'○× 3Dクイズ',score:score,total:deck.length,rate:deck.length?Math.round(score/deck.length*100):0,kind:'pictogram3D',activityId:'pictogram3d',difficultyLevel:pictogramLevelResult?pictogramLevelResult.level:1,masteryBefore:pictogramLevelResult?pictogramLevelResult.before:0,masteryAfter:pictogramLevelResult?pictogramLevelResult.points:0,adaptive:pictogramAnalysisResult,userProfileId:profile.profileId||'unconfigured',userName:profile.displayName||'名前未登録',userCode:profile.recordCode||'',questionResults:pictogramResults.slice()});localStorage.setItem(key,JSON.stringify(list));}catch(e){console.warn('3Dクイズの記録を保存できませんでした',e)}}
+function finish(){playing=false;paused=false;locked=true;stepTimer=0;stopGameBgm();const total=deck.length,rate=total?Math.round(score/total*100):0;pictogramLevelResult=window.KotobaLevels?window.KotobaLevels.finish('pictogram3d',rate,true,total):null;pictogramAnalysisResult=window.KotobaUnifiedLearning?window.KotobaUnifiedLearning.finish('genres',{genre:'3D・判断クイズ',activity:'pictogram3d',score:score,total:total}):null;savePictogramRecord();$('pauseBtn').disabled=true;$('pauseOverlay').classList.add('hidden');$('finalScore').textContent=score+' / '+total;const earned=awardMedal();$('medalReward').textContent=earned?'🏅 メダル +'+earned:'🏅 メダル +0';$('medalReward').classList.remove('hidden');$('resultText').textContent=(pictogramLevelResult?'Lv.'+pictogramLevelResult.level+'｜熟練度 '+pictogramLevelResult.points+'/100。':'')+(total&&score===total?'パーフェクト！ 全問正解です。メダルを5枚獲得しました。':score>0?'よくできました！ 正解があったのでメダルを1枚獲得しました。':'チャレンジ完了！ 今回のメダル獲得はありません。次も挑戦してみましょう。');const results=$('pictogramQuestionResults');results.textContent='';pictogramResults.forEach(r=>{const p=document.createElement('p');p.textContent=r.number+'問目 '+r.status+'｜'+r.question+'｜答え：'+r.answer+'｜解説：'+r.explanation;results.appendChild(p)});if(total&&score===total&&window.KotobaSoundPack)window.KotobaSoundPack.play('clear');if(window.KotobaDailyStreak)window.KotobaDailyStreak.finish('pictogramDailyStreak');$('result').classList.remove('hidden')}
+function answer(v){if(!playing||locked)return;locked=true;$('pauseBtn').disabled=true;const correct=v===deck[idx][1];const explanation=String(deck[idx][3]||'「'+deck[idx][0]+'」の正誤を確かめましょう。');pictogramResults.push({number:idx+1,question:deck[idx][0],correct:correct,status:correct?'正解':'不正解',answer:deck[idx][1]?'○':'×',given:v?'○':'×',explanation:explanation,improvement:correct?'':explanation});if(window.KotobaUnifiedLearning)window.KotobaUnifiedLearning.recordAnswer('genres',{id:'pictogram-'+deck[idx][0],difficultyLevel:deck[idx].difficultyLevel,answer:deck[idx][1]?'○':'×'},correct);if(correct){score++;playAnswerSfx(true);toast('正解！')}else{playAnswerSfx(false);toast('不正解。答え：'+(deck[idx][1]?'○':'×'));}$('score').textContent=score;const detail=$('answerExplanation3d');detail.textContent=(correct?'⭕ 正解！':'❌ 不正解。正解は「'+(deck[idx][1]?'○':'×')+'」です。')+' '+explanation;detail.classList.remove('hidden');setTimeout(()=>{idx++;if(idx>=deck.length)finish();else{locked=false;$('pauseBtn').disabled=false;yOffset=0;vy=0;ground=true;jumpQueued=false;player.position.set(0,0,17);stepTimer=0;hud()}},4200)}
+let yOffset=0;function jump(){if(playing&&!paused&&ground)jumpQueued=true}
+$('jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+function pauseGame(){if(!playing||paused||locked)return;paused=true;stopGameBgm();stepTimer=0;$('pauseOverlay').classList.remove('hidden');$('pauseBtn').textContent='▶ 再開';}
+function resumeGame(){if(!playing||!paused)return;paused=false;startGameBgm();$('pauseOverlay').classList.add('hidden');$('pauseBtn').textContent='Ⅱ 一時停止・設定';}
+$('resumeBtn').addEventListener('click',resumeGame);
+$('pauseBtn').addEventListener('click',()=>{if(paused)resumeGame();else pauseGame();});
+
+// The character uses the dash run cycle whenever it moves; there is no walking state.
+let gaitPhase=0,motionBlend=0,dashBlend=0;
+function updatePlayerPose(moving,dt,time){
+ motionBlend=THREE.MathUtils.damp(motionBlend,moving?1:0,10,dt);
+ dashBlend=THREE.MathUtils.damp(dashBlend,moving?1:0,7,dt);
+ if(moving)gaitPhase+=dt*(10+7*dashBlend);
+ const stride=Math.sin(gaitPhase),rebound=Math.abs(Math.sin(gaitPhase));
+ const range=.58+.32*dashBlend;
+ armShoulders.forEach((shoulder,i)=>{
+  const side=i===0?-1:1;
+  shoulder.rotation.z=THREE.MathUtils.lerp(side*2.16,side*.33,motionBlend);
+  shoulder.rotation.x=(i===0?1:-1)*stride*range*motionBlend;
+  armElbows[i].rotation.x=-.95*motionBlend;
+ });
+ legs.forEach((hip,i)=>{
+  const side=i===0?-1:1;
+  hip.rotation.z=side*THREE.MathUtils.lerp(.43,.15,motionBlend);
+  hip.rotation.x=(i===0?-1:1)*stride*range*motionBlend;
+ });
+ person.position.y=motionBlend*(.03+.065*dashBlend)*rebound;
+ person.rotation.x=-motionBlend*(.07+.08*dashBlend);
+ sparkle.rotation.z=Math.sin(time*2.4)*.10;
+}
+let npcWalkTime=0;
+const clock=new THREE.Clock();let lastRenderFrame=0;function animate(){requestAnimationFrame(animate);const now=performance.now();if(document.hidden||now-lastRenderFrame<(innerWidth<780?1000/30:1000/45))return;lastRenderFrame=now;let dt=Math.min(clock.getDelta(),.04),time=clock.elapsedTime;
+// NPCs actually stroll around their own safe paths, including their nameplates.
+// Time advances only while a quiz is active, so movement stops during pause.
+if(playing&&!paused){npcWalkTime+=dt;}
+spriteNpcs.forEach(a=>{const t=npcWalkTime*.38+a.phase;
+ a.sprite.position.x=a.homeX+Math.cos(t)*a.radius;
+ a.sprite.position.z=a.homeZ+Math.sin(t)*a.radius;
+ a.sprite.position.y=a.height/2+Math.abs(Math.sin(t*7))*.075;
+ a.tag.position.set(a.sprite.position.x,a.height+.9,a.sprite.position.z);
+});
+animalNpcs.forEach(a=>{const t=npcWalkTime*.25+a.phase;
+ a.group.position.x=a.homeX+Math.cos(t)*a.radius;
+ a.group.position.z=a.homeZ+Math.sin(t)*a.radius;
+ a.group.position.y=a.baseY+Math.abs(Math.sin(t*9))*.065;
+ a.group.rotation.y=-t;
+ a.tag.position.set(a.group.position.x,3.95*a.scale+a.group.position.y,a.group.position.z);
+});
+let moving=false;
+if(playing&&!paused&&!locked){let x=0,z=0;if(keys.w||keys.arrowup)z+=1;if(keys.s||keys.arrowdown)z-=1;if(keys.a||keys.arrowleft)x-=1;if(keys.d||keys.arrowright)x+=1;x+=sx;z-=sy;let n=Math.hypot(x,z);if(n>1){x/=n;z/=n}moving=n>.08;const dx=Math.sin(yaw)*z+Math.cos(yaw)*x,dz=-Math.cos(yaw)*z+Math.sin(yaw)*x;const moveSpeed=12.5;player.position.x=THREE.MathUtils.clamp(player.position.x+dx*moveSpeed*dt,-47,47);player.position.z=THREE.MathUtils.clamp(player.position.z+dz*moveSpeed*dt,-47,47);if(moving){person.rotation.y=Math.atan2(dx,dz);if(ground){stepTimer-=dt;if(stepTimer<=0){playStepSfx();stepTimer=0.27}}}else{stepTimer=0}
+if(jumpQueued&&ground){vy=7.5;ground=false;jumpQueued=false}if(!ground){yOffset+=vy*dt;vy-=19*dt;if(yOffset<=0){yOffset=0;vy=0;ground=true}}player.position.y=yOffset;
+for(const a of answerZones){if(Math.abs(player.position.x-a.x)<3.5&&Math.abs(player.position.z-a.z)<3.5){answer(a.value);break}}}
+updatePlayerPose(moving,dt,time);
+const target=new THREE.Vector3(player.position.x,player.position.y+1.65,player.position.z);const dist=8.7;camera.position.set(target.x+Math.sin(yaw)*dist,target.y+2.1+pitch*3,target.z+Math.cos(yaw)*dist);camera.lookAt(target.x,target.y+.15,target.z-1.4);world.update(time);renderer.render(scene,camera)}
+resize();animate();function resize(){camera.fov=(innerWidth<=480&&innerHeight>innerWidth)?74:66;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,innerWidth<780?1.2:1.5));renderer.shadowMap.enabled=innerWidth>=780}addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,180));
+startGame();
+}catch(e){console.error(e);$('loading').classList.remove('hidden');$('retryLoad').hidden=false;$('status').textContent='ゲームを開始できませんでした。通信環境を確認して、もう一度お試しください。';}
+})();
+</script>
+</body>
+</html>

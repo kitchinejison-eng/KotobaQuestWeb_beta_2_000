@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>ことばクエスト 開発版｜朗読・想起リハビリクイズ</title>
+    <link rel="stylesheet" href="styles/training/reading-memory-tailwind.css">
+    <link rel="stylesheet" href="fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="styles/training/reading-memory-ver120.css?v=r2">
+    <style>
+        
+        
+        body {
+            font-family: 'Noto Sans CJK JP', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+            background-color: #fdfbf7;
+            color: #2d3748;
+        }
+
+        /* カスタムボタンアニメーション */
+        .btn-active {
+            transition: all 0.15s ease-in-out;
+        }
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+
+        /* 〇×判定アニメーション */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .pop-in {
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        /* 強調ルビ・発音促通スタイル */
+        .phonetics-k { color: #d97706; font-weight: bold; } /* 軟口蓋音 (カ行) */
+        .phonetics-t { color: #2563eb; font-weight: bold; } /* 歯茎音 (タ行・ナ行・ラ行) */
+        /* 結果画面の記録ボタン：スクロールしなくても気づきやすい緑色の大きなボタン */
+        #training-records-btn.rm-records-button {
+            box-sizing: border-box !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            min-height: 76px !important;
+            margin: 14px auto 18px !important;
+            padding: 16px 18px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
+            border: 3px solid #14532d !important;
+            border-radius: 18px !important;
+            background: #16803c !important;
+            color: #ffffff !important;
+            box-shadow: 0 5px 0 #14532d, 0 8px 18px rgba(20, 83, 45, .22) !important;
+            font-size: clamp(19px, 4.5vw, 24px) !important;
+            line-height: 1.25 !important;
+            font-weight: 900 !important;
+            text-align: left !important;
+            cursor: pointer !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        #training-records-btn.rm-records-button:active { transform: translateY(2px); box-shadow: 0 3px 0 #14532d !important; }
+        #training-records-btn .rm-records-icon { flex: 0 0 auto; font-size: 31px; line-height: 1; }
+        #training-records-btn .rm-records-button-text { flex: 1 1 auto; color: #fff !important; }
+        #training-records-btn .rm-records-button-text small { display: block; margin-top: 4px; font-size: 14px; font-weight: 700; color: #e9ffef !important; }
+        #training-records-btn .rm-records-arrow { flex: 0 0 auto; font-size: 36px; font-weight: 900; line-height: 1; color: #fff !important; }
+        @media (max-width: 520px) { #training-records-btn.rm-records-button { min-height: 82px !important; padding: 15px 12px !important; gap: 10px !important; } }
+    </style>
+  <link rel="stylesheet" href="styles/base/browser-responsive.css">
+  <link rel="stylesheet" href="styles/ui/daily-streak.css?v=108">
+  <link rel="stylesheet" href="styles/ui/veta17-theme.css?v=2">
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+<script src="scripts/ui/veta14-theme-sync.js?v=veta17"></script>
+
+
+    <!-- ヘッダー -->
+    <header class="bg-amber-100 border-b-4 border-amber-300 p-4 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-3xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <button id="back-to-kotoba" type="button" onclick="returnToKotobaQuest()" class="bg-white hover:bg-amber-50 text-amber-900 text-base sm:text-lg font-bold px-4 py-3 rounded-xl shadow-md border-2 border-amber-300 btn-active">
+                ← ことばクエストへ戻る
+            </button>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-amber-900 flex items-center gap-2">
+                <i class="fa-solid font-bold fa-book-open text-amber-600"></i>
+                <span id="story-page-title">朗読・想起クイズ</span>
+            </h1>
+            <div class="flex gap-2">
+                <button id="tab-story-btn" onclick="switchTab('story')" class="px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-600 bg-amber-500 text-white shadow-md btn-active">
+                    📖 おはなし
+                </button>
+                <button id="tab-quiz-btn" onclick="switchTab('quiz')" class="px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-300 bg-white text-amber-800 shadow-md btn-active">
+                    ❓ クイズ
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主コンテンツ領域 -->
+    <main class="max-w-3xl mx-auto w-full p-4 sm:p-6 flex-grow">
+
+        <!-- おはなしセクション -->
+        <section id="story-section" class="space-y-6">
+            <div id="story-title-label" class="text-2xl sm:text-3xl font-black text-amber-900 text-center">朗読・想起クイズ</div>
+            <!-- 読上げ・設定コントロール -->
+            <div class="bg-amber-50 p-4 sm:p-5 rounded-2xl border-2 border-amber-200 flex flex-wrap justify-between items-center gap-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <button onclick="readAllStory()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-lg sm:text-xl font-bold px-5 py-3 rounded-xl shadow-md flex items-center gap-2 btn-active">
+                        <i class="fa-solid fa-volume-high text-2xl"></i>
+                        <span>ぜんぶ よむ</span>
+                    </button>
+                    <button onclick="stopSpeech()" class="bg-rose-500 hover:bg-rose-600 text-white text-base sm:text-lg font-bold px-4 py-3 rounded-xl shadow-md btn-active">
+                        <i class="fa-solid fa-square"></i>
+                        <span>とめる</span>
+                    </button>
+                </div>
+                <div class="text-xs sm:text-sm text-gray-600 font-bold bg-white px-3 py-2 rounded-lg border border-amber-200">
+                    💡 朗読・音読の練習に ご活用ください
+                </div>
+                <div id="voice-status" class="w-full text-sm font-bold text-emerald-700" role="status" aria-live="polite"></div>
+            </div>
+
+            <!-- 本文表示エリア -->
+            <div id="story-body-wrap" class="bg-white p-6 sm:p-8 rounded-3xl border-4 border-amber-200 shadow-lg text-2xl sm:text-3xl leading-relaxed sm:leading-loose tracking-wide space-y-6">
+                <div id="story-body" class="reading-memory-story-body"></div>
+            </div>
+
+            <!-- クイズへ進むボタン -->
+            <div class="text-center pt-4">
+                <button onclick="switchTab('quiz')" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white text-2xl font-black px-10 py-5 rounded-2xl shadow-xl border-b-4 border-amber-700 btn-active flex items-center justify-center gap-3 mx-auto">
+                    <span>おはなしを 覚えたら クイズへ！</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- クイズセクション -->
+        <section id="quiz-section" class="hidden space-y-6">
+            
+            <!-- 進捗メーター -->
+            <div class="bg-white p-4 rounded-2xl border-2 border-amber-200 shadow-sm flex items-center justify-between gap-4">
+                <div class="text-lg sm:text-xl font-bold text-amber-900">
+                    もんだい <span id="current-q-num" class="text-3xl text-amber-600 font-black">1</span> / 5
+                </div>
+                <div class="flex-grow max-w-xs bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div id="progress-bar" class="bg-amber-500 h-full w-1/5 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- クイズカード -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border-4 border-amber-300 shadow-xl space-y-6 relative">
+                
+                <!-- 質問テキスト -->
+                <div class="flex items-start gap-3">
+                    <span class="bg-amber-500 text-white font-black text-xl sm:text-2xl px-3 py-1 rounded-xl shrink-0 mt-1">
+                        問 <span id="q-number-label">1</span>
+                    </span>
+                    <h2 id="quiz-question" class="text-2xl sm:text-3xl font-black text-gray-800 leading-snug">
+                        <!-- 問題文がここに入ります -->
+                    </h2>
+                </div>
+
+                <!-- 音声読み上げボタン -->
+                <div class="flex justify-end">
+                    <button onclick="speakCurrentQuestion()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-4 py-2 rounded-xl text-lg flex items-center gap-2 border border-amber-300 btn-active">
+                        <i class="fa-solid fa-volume-high text-amber-600"></i>
+                        <span>もんだいを きく</span>
+                    </button>
+                </div>
+
+                <hr class="border-amber-100">
+
+                <!-- 〇× 回答ボタン -->
+                <div id="options-container" class="grid grid-cols-2 gap-4 sm:gap-6 pt-2">
+                    <button onclick="handleAnswer(true)" class="bg-red-50 hover:bg-red-100 border-4 border-red-400 hover:border-red-500 text-red-600 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center gap-2 shadow-lg btn-active">
+                        <i class="fa-regular fa-circle text-6xl sm:text-8xl font-black"></i>
+                        <span class="text-2xl sm:text-3xl font-black">〇（ただしい）</span>
+                    </button>
+
+                    <button onclick="handleAnswer(false)" class="bg-blue-50 hover:bg-blue-100 border-4 border-blue-400 hover:border-blue-500 text-blue-600 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center gap-2 shadow-lg btn-active">
+                        <i class="fa-solid fa-xmark text-6xl sm:text-8xl font-black"></i>
+                        <span class="text-2xl sm:text-3xl font-black">✕（ちがう）</span>
+                    </button>
+                </div>
+
+                <!-- 回答後のフィードバック領域 -->
+                <div id="feedback-area" class="hidden p-6 rounded-2xl border-4 pop-in space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div id="feedback-icon" class="text-5xl sm:text-6xl"></div>
+                        <div>
+                            <div id="feedback-title" class="text-3xl sm:text-4xl font-black"></div>
+                            <div id="feedback-explanation" class="text-xl sm:text-2xl font-bold mt-2 text-gray-700"></div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button id="next-btn" onclick="nextQuestion()" class="bg-amber-500 hover:bg-amber-600 text-white text-xl sm:text-2xl font-black px-8 py-4 rounded-xl shadow-lg border-b-4 border-amber-700 btn-active flex items-center gap-2">
+                            <span>つぎの もんだいへ</span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- おはなし確認用折りたたみカード -->
+            <details class="bg-amber-50 rounded-2xl border-2 border-amber-200 p-4">
+                    <summary class="text-lg font-bold text-amber-900 cursor-pointer hover:text-amber-700">🔍 おはなしを もういちど かくにんする</summary>
+                    <div id="story-review" class="mt-4 text-lg sm:text-xl leading-relaxed text-gray-800 bg-white p-4 rounded-xl border border-amber-200 space-y-2"></div>
+                </details>
+
+        </section>
+
+        <!-- 結果発表セクション -->
+        <section id="result-section" class="hidden text-center space-y-8 py-6">
+            <div class="bg-white p-8 sm:p-10 rounded-3xl border-4 border-amber-300 shadow-xl space-y-6 max-w-xl mx-auto">
+                <h2 class="text-3xl sm:text-4xl font-black text-amber-900">🎉 お疲れさまでした！</h2>
+                
+                <div class="text-2xl sm:text-3xl font-bold text-gray-700">
+                    あなたの とくてん
+                </div>
+
+                <div class="text-6xl sm:text-7xl font-black text-amber-600">
+                    <span id="score-display">0</span> / <span id="result-total">5</span> 問 正解
+                </div>
+
+                <p id="score-comment" class="text-xl sm:text-2xl font-bold text-gray-800 bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                    <!-- メッセージがここに入ります -->
+                </p>
+                <div id="readingDailyStreak" class="daily-streak-slot"></div>
+
+                <button id="training-records-btn" type="button" onclick="openTrainingRecords()" class="rm-records-button" style="display:flex;visibility:visible;opacity:1;">
+                    <span class="rm-records-icon" aria-hidden="true">📊</span>
+                    <span class="rm-records-button-text">トレーニング記録を見る<small>これまでの記録を確認</small></span>
+                    <span class="rm-records-arrow" aria-hidden="true">›</span>
+                </button>
+
+                <div id="result-review" class="text-left bg-white rounded-2xl border-2 border-amber-200 p-4 space-y-3"></div>
+
+                <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                    <button onclick="restartQuiz()" class="bg-amber-500 hover:bg-amber-600 text-white text-xl font-black px-8 py-4 rounded-2xl shadow-lg border-b-4 border-amber-700 btn-active flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>もう一度 クイズをする</span>
+                    </button>
+                    <button onclick="switchTab('story')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xl font-black px-8 py-4 rounded-2xl shadow-lg border-b-4 border-emerald-800 btn-active flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-book"></i>
+                        <span>おはなしを よむ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-amber-100 border-t border-amber-200 p-4 text-center text-amber-800 text-sm font-bold mt-8">
+        言語聴覚・想起リハビリテーション支援ツール
+    </footer>
+
+    <script src="scripts/system/daily-streak.js?v=108"></script>
+    <script src="scripts/system/user-profile.js?v=veta16-profile"></script>
+    <script src="scripts/learning/learning-mode-veta12.js?v=1"></script>
+    <script src="scripts/learning/difficulty-veta11.js?v=1"></script>
+    <script src="scripts/learning/adaptive-learning.js?v=veta12"></script>
+    <script src="scripts/learning/unified-learning-veta1.js?v=veta12"></script>
+    <script src="scripts/audio/kotoba-audio-common-r5.js?v=r5"></script>
+<script>
+        // 朗読・想起クイズは「課題ごとに独立」して動作します。
+        // URL: reading-memory.html?story=1 / 2 / 3
+        var STORY_ID = (new URLSearchParams(window.location.search).get('story') || '1');
+
+        var STORIES = {
+            "1": {
+                title: "朗読・想起① かぼちゃおじいさんと わかめおじいさん",
+                character: "かぼちゃおじいさん・わかめおじいさん",
+                story: [
+                    "かぼちゃおじいさんと わかめおじいさんは、もりへ えんそくに でかけます。大きな リュックに、おにぎりを つめました。",
+                    "かぼちゃおじいさんの おにぎりの ぐは、あかい うめぼしです。すっぱいけれど、元気が 出ます。",
+                    "わかめおじいさんの おにぎりの ぐは、香ばしい こんぶです。こんぶの たれが、ごはんに よく しみて います。",
+                    "ふたりは たかい おかの上で、風を かんじながら、おにぎりを たけのこの 皮から だして、美味しく たべました。"
+                ],
+                review: [
+                    "・ふたりは、もりへ えんそくに でかけました。",
+                    "・かぼちゃおじいさんの 具は、うめぼしです。",
+                    "・わかめおじいさんの 具は、こんぶです。",
+                    "・たかい おかの上で おにぎりを たべました。",
+                    "・おにぎりは たけのこの 皮から だしました。"
+                ],
+                quiz: [
+                    { q: "かぼちゃおじいさんとわかめおじいさんは、海へあそびに行きました。", a: false, exp: "×（ばつ）：海ではなく、「もり」へ 行きました。" },
+                    { q: "かぼちゃおじいさんのおにぎりの具は、赤い「うめぼし」でした。", a: true, exp: "〇（まる）：かぼちゃおじいさんの 具は、すっぱい うめぼしです。" },
+                    { q: "わかめおじいさんのおにぎりの具は、「しゃけ」でした。", a: false, exp: "×（ばつ）：しゃけではなく、香ばしい「こんぶ」です。" },
+                    { q: "ふたりは、高いおかの上でおにぎりを食べました。", a: true, exp: "〇（まる）：たかい おかの上で、風を かんじながら 食べました。" },
+                    { q: "おにぎりは、サランラップに包まれていました。", a: false, exp: "×（ばつ）：サランラップではなく、「たけのこの皮」でした。" }
+                ]
+            },
+            "2": {
+                title: "朗読・想起② しらす爺さんの温泉旅行（あんパン）",
+                character: "しらす爺さん",
+                story: [
+                    "しらす爺さんは、秋（あき）の日に熱海（あたみ）の温泉（おんせん）へ出（で）かけました。",
+                    "行（い）きの電車（でんしゃ）では、大好（だいす）きなあんパンを食べました。",
+                    "旅館（りょかん）に着（つ）くと、まず温（あたた）かい温泉に入ってのんびり過ごしました。",
+                    "夕食（ゆうしょく）には、新鮮（しんせん）なお刺身（さしみ）と金目鯛（きんめだい）の煮付（につ）けを食べて大満足。",
+                    "夜（よる）はふかふかのお布団（ふとん）で、朝（あさ）までぐっすり眠（ねむ）りました。"
+                ],
+                review: [
+                    "・秋の日に、熱海の温泉へ出かけました。",
+                    "・電車では、大好きなあんパンを食べました。",
+                    "・旅館に着くと、まず温泉に入りました。",
+                    "・夕食は、お刺身と金目鯛の煮付けでした。",
+                    "・夜は朝までぐっすり眠りました。"
+                ],
+                quiz: [
+                    { q: "しらすお爺さんが行ったのは、秋の温泉旅行である。", a: true, exp: "〇（まる）：秋の日に熱海の温泉へ出かけました。" },
+                    { q: "電車の中で食べたのは、カレーパンである。", a: false, exp: "×（ばつ）：電車の中で食べたのは大好きな「あんパン」です。" },
+                    { q: "旅館に着いて、最初にお風呂（温泉）に入った。", a: true, exp: "〇（まる）：旅館に着くと、まず温かい温泉に入ってのんびり過ごしました。" },
+                    { q: "夕食には、ハンバーグを食べた。", a: false, exp: "×（ばつ）：夕食は「お刺身と金目鯛の煮付け」でした。" },
+                    { q: "夜は朝までぐっすり眠ることができた。", a: true, exp: "〇（まる）：夜はふかふかのお布団で、朝までぐっすり眠りました。" }
+                ]
+            },
+            "3": {
+                title: "朗読・想起③ 図書館の忘れもの（順番・理由）",
+                character: "あおいさん",
+                story: [
+                    "土曜日（どようび）の午後（ごご）、あおいさんは市立（しりつ）図書館（としょかん）に行（い）きました。青（あお）い折（お）りたたみ傘（がさ）を持（も）っていました。",
+                    "入口（いりぐち）で借（か）りたい本（ほん）を探（さが）し、料理（りょうり）の本と花（はな）の写真集（しゃしんしゅう）を選（えら）びました。",
+                    "窓際（まどぎわ）の席（せき）で少（すこ）し本を読み、帰（かえ）る前（まえ）に受付（うけつけ）で二冊（にさつ）を借りました。",
+                    "外（そと）に出（で）ようとしたとき、傘がないことに気（き）づきました。あおいさんは受付の人に相談（そうだん）しました。",
+                    "受付の人と一緒（いっしょ）に窓際の席へ戻（もど）ると、椅子（いす）の横（よこ）に傘がありました。あおいさんはお礼（れい）を言いました。",
+                    "帰り道（みち）で雨（あめ）が降（ふ）り出しました。あおいさんは見（み）つかった青い傘を開（ひら）いて、ぬれずに帰りました。",
+                ],
+                review: [
+                    "・土曜日の午後、あおいさんは図書館へ行きました。",
+                    "・料理の本と花の写真集を選びました。",
+                    "・窓際の席で読み、受付で二冊を借りました。",
+                    "・傘を忘れたことに気づき、受付で相談しました。",
+                    "・椅子の横で傘を見つけ、帰りの雨で使いました。",
+                ],
+                quiz: [
+                    { q: "あおいさんが図書館に行ったのは土曜日の午後です。", a: true, exp: "〇：土曜日の午後に図書館へ出かけました。" },
+                    { q: "あおいさんが選んだのは料理の本と花の写真集です。", a: true, exp: "〇：借りるためにこの二冊を選びました。" },
+                    { q: "あおいさんは本を選ぶ前に、受付で二冊を借りました。", a: false, exp: "×：本を探して選び、そのあとで借りました。" },
+                    { q: "傘がないことに気づいたのは、外へ出ようとしたときです。", a: true, exp: "〇：帰ろうとしたときに気づきました。" },
+                    { q: "忘れた傘を探すとき、あおいさんは受付に相談しました。", a: true, exp: "〇：自分だけで探し続けず、受付で相談しました。" },
+                ]
+            }
+        };
+
+        // VETA10：各おはなしの内容に即した問題候補を5問→20問に拡張。
+        // 1回の負担を増やさないよう、毎回ランダムに5問を選びます。
+        STORIES["1"].quiz.push(
+            { q: "ふたりは、森へ遠足に出かけました。", a: true, exp: "〇：ふたりが出かけた先は森です。" },
+            { q: "ふたりは、大きなリュックにおにぎりを詰めました。", a: true, exp: "〇：出発するとき、大きなリュックにおにぎりを入れました。" },
+            { q: "リュックに詰めた食べ物は、サンドイッチでした。", a: false, exp: "×：持って行ったのは、おにぎりです。" },
+            { q: "かぼちゃおじいさんのおにぎりには、こんぶが入っていました。", a: false, exp: "×：かぼちゃおじいさんの具は、うめぼしです。" },
+            { q: "うめぼしは、すっぱい味がしました。", a: true, exp: "〇：おはなしには、うめぼしがすっぱいと書かれています。" },
+            { q: "かぼちゃおじいさんは、うめぼしを食べると元気が出ると感じました。", a: true, exp: "〇：すっぱいけれど、元気が出ると書かれています。" },
+            { q: "わかめおじいさんのおにぎりの具は、こんぶでした。", a: true, exp: "〇：わかめおじいさんの具は、こんぶです。" },
+            { q: "わかめおじいさんのおにぎりは、甘いチョコレート味でした。", a: false, exp: "×：具は香ばしいこんぶです。" },
+            { q: "こんぶのたれは、ごはんにしみていました。", a: true, exp: "〇：こんぶのたれがごはんによくしみていました。" },
+            { q: "ふたりは、低い地下室でおにぎりを食べました。", a: false, exp: "×：ふたりは、高いおかの上で食べました。" },
+            { q: "ふたりは、おかの上で風を感じました。", a: true, exp: "〇：高いおかの上で、風を感じながら食べました。" },
+            { q: "ふたりは、レストランの席でおにぎりを食べました。", a: false, exp: "×：食べた場所は、おかの上です。" },
+            { q: "おにぎりは、たけのこの皮から取り出しました。", a: true, exp: "〇：たけのこの皮から出して食べました。" },
+            { q: "おにぎりは、木の箱から取り出しました。", a: false, exp: "×：おにぎりは、たけのこの皮から出しました。" },
+            { q: "ふたりは、おにぎりをおいしく食べました。", a: true, exp: "〇：おはなしには、美味しく食べたと書かれています。" }
+        );
+        STORIES["2"].quiz.push(
+            { q: "しらす爺さんの旅行の季節は秋でした。", a: true, exp: "〇：秋の日に温泉へ出かけました。" },
+            { q: "旅行先は北海道の温泉でした。", a: false, exp: "×：旅行先は熱海です。" },
+            { q: "しらす爺さんは熱海へ行きました。", a: true, exp: "〇：熱海の温泉を訪れました。" },
+            { q: "行きの乗り物は電車でした。", a: true, exp: "〇：行きの電車の中で食べ物を食べました。" },
+            { q: "しらす爺さんは電車で、しらす煎餅を食べました。", a: false, exp: "×：このおはなしでは、あんパンを食べました。" },
+            { q: "電車で食べたあんパンは、しらす爺さんの好きな食べ物でした。", a: true, exp: "〇：大好きなあんパンと書かれています。" },
+            { q: "旅館に着いてすぐ、まず買い物へ行きました。", a: false, exp: "×：旅館に着いて、まず温泉に入りました。" },
+            { q: "旅館では、温かい温泉に入りました。", a: true, exp: "〇：温かい温泉に入って過ごしました。" },
+            { q: "温泉では、のんびり過ごしました。", a: true, exp: "〇：温泉に入って、のんびりしました。" },
+            { q: "夕食には新鮮なお刺身が出ました。", a: true, exp: "〇：夕食はお刺身と金目鯛の煮付けでした。" },
+            { q: "夕食には、金目鯛の煮付けもありました。", a: true, exp: "〇：金目鯛の煮付けを食べました。" },
+            { q: "しらす爺さんは夕食に満足できませんでした。", a: false, exp: "×：夕食に大満足したと書かれています。" },
+            { q: "夜は、固い床の上で眠りました。", a: false, exp: "×：ふかふかのお布団で眠りました。" },
+            { q: "夜に眠った場所は、ふかふかのお布団でした。", a: true, exp: "〇：ふかふかのお布団で寝ました。" },
+            { q: "しらす爺さんは、夜中ずっと起きていました。", a: false, exp: "×：朝までぐっすり眠りました。" }
+        );
+        STORIES["3"].quiz.push(
+            {q:"あおいさんは朝早く図書館へ行きました。",a:false,exp:"×：出かけたのは土曜日の午後です。"},            {q:"図書館へ持って行った傘は青色でした。",a:true,exp:"〇：青い折りたたみ傘を持っていました。"},            {q:"料理の本と動物の写真集を選びました。",a:false,exp:"×：写真集は花の写真集です。"},            {q:"本は三冊借りました。",a:false,exp:"×：借りたのは二冊です。"},            {q:"本を読んだ席は窓際でした。",a:true,exp:"〇：窓際の席で少し読みました。"},            {q:"借りる手続きをしたのは、帰る前です。",a:true,exp:"〇：帰る前に受付で借りました。"},            {q:"傘がないと気づいた場所は、自宅の玄関です。",a:false,exp:"×：図書館を出ようとしたときです。"},            {q:"忘れた傘はすぐに受付の人へ相談しました。",a:true,exp:"〇：受付の人に相談したと書かれています。"},            {q:"傘を探すとき、一人で駅まで戻りました。",a:false,exp:"×：受付の人と一緒に席へ戻りました。"},            {q:"傘が見つかったのは、窓際の席の椅子の横です。",a:true,exp:"〇：傘は椅子の横にありました。"},            {q:"傘は図書館の屋上に置いてありました。",a:false,exp:"×：窓際の席の椅子の横です。"},            {q:"傘が見つかったあと、あおいさんはお礼を言いました。",a:true,exp:"〇：一緒に探した受付の人へお礼を言いました。"},            {q:"帰り道では晴れたままでした。",a:false,exp:"×：帰り道で雨が降り出しました。"},            {q:"帰りの雨では、見つかった傘を使いました。",a:true,exp:"〇：青い傘を開いて帰りました。"},            {q:"雨が降ったので、借りた本を図書館へ返しました。",a:false,exp:"×：帰る前に二冊を借りたまま帰りました。"}
+        );
+
+        // VETA11: 読み聞かせ本文に書かれた事実と、因果・順序を照らし合わせる追加45問。
+        // 同じ物語の説明と矛盾する内容は、不正解として出題する。
+        STORIES['1'].quiz.push(
+            {q:'遠足に出かけたのは、かぼちゃおじいさん一人だけでした。',a:false,exp:'×：わかめおじいさんも一緒でした。'},
+            {q:'ふたりは遠足のお弁当におにぎりを選びました。',a:true,exp:'〇：リュックにおにぎりを詰めました。'},
+            {q:'リュックは小さかったので、おにぎりを入れられませんでした。',a:false,exp:'×：大きなリュックにおにぎりを入れました。'},
+            {q:'かぼちゃおじいさんとわかめおじいさんでは、おにぎりの具が違いました。',a:true,exp:'〇：うめぼしとこんぶで違いました。'},
+            {q:'かぼちゃおじいさんのおにぎりの具は、甘いジャムでした。',a:false,exp:'×：赤いうめぼしでした。'},
+            {q:'わかめおじいさんは、こんぶのおにぎりを持っていきました。',a:true,exp:'〇：わかめおじいさんの具はこんぶです。'},
+            {q:'ふたりが食べたとき、風が吹いていました。',a:true,exp:'〇：おかの上で風を感じました。'},
+            {q:'遠足の目的地は、海辺の砂浜でした。',a:false,exp:'×：森へ出かけました。'},
+            {q:'おにぎりを食べた場所は森の中の高いおかでした。',a:true,exp:'〇：高いおかの上で食べました。'},
+            {q:'こんぶのたれは、ごはんにほとんどついていませんでした。',a:false,exp:'×：ごはんによくしみていました。'},
+            {q:'うめぼしは酸っぱく、元気が出る具として紹介されました。',a:true,exp:'〇：そのように説明されています。'},
+            {q:'ふたりは食べる前に、たけのこの皮からおにぎりを取り出しました。',a:true,exp:'〇：包みから出して食べました。'},
+            {q:'こんぶのおにぎりを用意したのは、かぼちゃおじいさんでした。',a:false,exp:'×：こんぶはわかめおじいさんのおにぎりです。'},
+            {q:'ふたりはおにぎりの味に満足しました。',a:true,exp:'〇：美味しく食べたと書かれています。'},
+            {q:'おにぎりを食べたとき、ふたりは屋内のレストランにいました。',a:false,exp:'×：高いおかの上で食べました。'}
+        );
+        STORIES['2'].quiz.push(
+            {q:'熱海へ行ったのは秋のある日でした。',a:true,exp:'〇：秋の日に出かけました。'},
+            {q:'しらす爺さんは旅行で列車を使いませんでした。',a:false,exp:'×：行きの電車であんパンを食べました。'},
+            {q:'電車に乗っている間に好きな食べ物を食べました。',a:true,exp:'〇：あんパンを食べています。'},
+            {q:'このおはなしで電車のおやつは、しらす煎餅でした。',a:false,exp:'×：このおはなしでは、あんパンです。'},
+            {q:'宿泊した旅館では、温泉に入りました。',a:true,exp:'〇：到着後に温泉へ入りました。'},
+            {q:'旅館に着いた直後に、まず夕食を食べました。',a:false,exp:'×：まず温泉に入りました。'},
+            {q:'しらす爺さんは、温泉でゆったり過ごしました。',a:true,exp:'〇：のんびり過ごしました。'},
+            {q:'夕食は刺身と金目鯛の煮付けでした。',a:true,exp:'〇：二つの料理が出ました。'},
+            {q:'金目鯛は煮付けではなく、必ず焼き魚でした。',a:false,exp:'×：金目鯛の煮付けでした。'},
+            {q:'夕食について、しらす爺さんは大満足でした。',a:true,exp:'〇：大満足と書かれています。'},
+            {q:'旅館で眠ったのは、硬いベンチの上でした。',a:false,exp:'×：ふかふかのお布団です。'},
+            {q:'しらす爺さんは夜、布団で眠りました。',a:true,exp:'〇：お布団で眠りました。'},
+            {q:'朝まで眠らず、温泉で過ごし続けました。',a:false,exp:'×：夜はぐっすり眠りました。'},
+            {q:'旅行の行き先と温泉に入った場所は、熱海でした。',a:true,exp:'〇：熱海の温泉旅行です。'},
+            {q:'この旅行は暑い夏の海水浴が目的でした。',a:false,exp:'×：秋の日の温泉旅行です。'}
+        );
+        STORIES['3'].quiz.push(
+            {q:"図書館で最初に行ったのは、本を探すことです。",a:true,exp:"〇：入口で借りたい本を探しました。"},            {q:"借りる前に、窓際の席で本を読みました。",a:true,exp:"〇：席で少し読んだあと借りました。"},            {q:"本を探すより先に、忘れた傘を見つけました。",a:false,exp:"×：傘を探したのは帰り際です。"},            {q:"あおいさんが相談した人は、図書館の受付の人です。",a:true,exp:"〇：受付に相談しています。"},            {q:"傘は椅子の下ではなく、椅子の横にありました。",a:true,exp:"〇：椅子の横にあったと書かれています。"},            {q:"傘は受付の人から新しく買ったものです。",a:false,exp:"×：もともと持っていた青い傘です。"},            {q:"あおいさんは、傘を見つけたことを知らせずに帰りました。",a:false,exp:"×：受付の人にお礼を言いました。"},            {q:"あおいさんは忘れ物に気づき、相談してから探しました。",a:true,exp:"〇：相談のあと、席へ戻りました。"},            {q:"雨が降る前に、あおいさんは傘を見つけていました。",a:true,exp:"〇：傘を見つけ、帰り道で雨が降り出しました。"},            {q:"あおいさんは傘を置き忘れたので、雨でぬれました。",a:false,exp:"×：見つけた傘を使い、ぬれずに帰りました。"},            {q:"あおいさんが傘を忘れたのは、図書館へ来る前です。",a:false,exp:"×：図書館で席を使ったあとに忘れたと気づきました。"},            {q:"料理の本と花の写真集は、同じ日に借りました。",a:true,exp:"〇：受付で二冊まとめて借りました。"},            {q:"傘が必要になった理由は、帰り道に雨が降ったからです。",a:true,exp:"〇：帰り道で雨が降り出しました。"},            {q:"受付の人は、傘を探すのに付き添いました。",a:true,exp:"〇：受付の人と一緒に席へ戻りました。"},            {q:"話の順番は、図書館に行く→本を借りる→傘を探す→帰る、です。",a:true,exp:"〇：本文の出来事はこの順番です。"}
+        );
+
+        Object.keys(STORIES).forEach(function (storyId) {
+            STORIES[storyId].quiz.forEach(function (q,i) {
+                q.difficultyLevel = Math.min(10,Math.floor(i / Math.max(1,STORIES[storyId].quiz.length / 10)) + 1);
+            });
+        });
+
+        var currentStory = STORIES[STORY_ID] || STORIES["1"];
+        var readingActivityId = 'readingMemory' + (['1','2','3'].indexOf(STORY_ID)>=0?STORY_ID:'1');
+        function selectRandomStoryQuestions(allQuestions, count) {
+            var selectedLevel = window.KotobaLevels ? window.KotobaLevels.get(readingActivityId).selected : 1;
+            var pool = window.KotobaLevels ? window.KotobaLevels.pool(allQuestions,selectedLevel) : allQuestions.slice();
+            for (var i = pool.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = pool[i]; pool[i] = pool[j]; pool[j] = temp;
+            }
+            return pool.slice(0, count);
+        }
+        var quizData = selectRandomStoryQuestions(currentStory.quiz, 5);
+        var currentQuestionIndex = 0;
+        var score = 0;
+        var answered = false;
+        var quizHistory = [];
+        var quizStartedAt = null;
+        var quizLearningStarted = false;
+        var quizResultSaved = false;
+        var speechQueue = [];
+        var speechGeneration = 0;
+
+        function stopSpeech(){
+            speechGeneration++;
+            speechQueue = [];
+            // 音声読み上げ(TTS)と音声認識を別々に停止します。
+            try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
+            try { if (window.AndroidSpeech && typeof window.AndroidSpeech.stopTts === 'function') window.AndroidSpeech.stopTts(); } catch(e){}
+            var status = document.getElementById('voice-status');
+            if (status) status.textContent = '';
+        }
+
+        // 「ぜんぶ よむ」用に、現在のお話の各段落から本文を作ります。
+        // 以前は未定義の storyTextFull を参照していたため、押しても再生されませんでした。
+        function readAllStory(){
+            var fullText = (currentStory && Array.isArray(currentStory.story) ? currentStory.story : [])
+                .map(function(paragraph){
+                    return String(paragraph || '').replace(/\s+/g, ' ').trim().replace(/[。！？]+$/g, '');
+                })
+                .filter(function(paragraph){ return paragraph.length > 0; })
+                .join('。 ');
+            if (fullText) speakText(fullText + '。');
+        }
+
+        // 長文を小さな文節に分割。Chrome等で長い一つのUtteranceが停止する問題を避けます。
+        function splitSpeech(text){
+            var sentences=String(text).match(/[^。！？!?、，,]+[。！？!?、，,]?/g)||[String(text)];
+            var parts=[],buffer='';
+            sentences.forEach(function(s){
+                while(s.length>110){
+                    if(buffer){parts.push(buffer);buffer='';}
+                    parts.push(s.slice(0,110));s=s.slice(110);
+                }
+                if(buffer.length+s.length>110){parts.push(buffer);buffer='';}
+                buffer+=s;
+            });
+            if(buffer)parts.push(buffer);
+            return parts.filter(Boolean);
+        }
+        function readSpeechChunk(gen){
+            if(gen!==speechGeneration)return;
+            var status=document.getElementById('voice-status');
+            if(!speechQueue.length){if(status)status.textContent='読み上げが完了しました。';return;}
+            var sentence=speechQueue.shift();
+            try{
+                var u=new SpeechSynthesisUtterance(sentence);
+                u.lang='ja-JP';u.rate=.85 * (window.KotobaSharedSFX?window.KotobaSharedSFX.voiceRate():1);u.pitch=1;u.volume=window.KotobaSharedSFX?window.KotobaSharedSFX.voiceLevel():.6;
+                var voices=window.speechSynthesis.getVoices();
+                var jaVoice=voices.find(function(v){return /^ja[-_]/i.test(v.lang);});
+                if(jaVoice)u.voice=jaVoice;
+                u.onstart=function(){if(gen===speechGeneration&&status)status.textContent='🔊 読み上げ中…';};
+                u.onend=function(){if(gen===speechGeneration)setTimeout(function(){readSpeechChunk(gen);},70);};
+                u.onerror=function(event){
+                    if(gen!==speechGeneration)return;
+                    speechQueue=[];
+                    if(status)status.textContent='読み上げが停止しました。音量や音声設定を確認し、もう一度押してください。';
+                };
+                if(window.speechSynthesis.paused)window.speechSynthesis.resume();
+                window.speechSynthesis.speak(u);
+            }catch(e){if(status)status.textContent='音声を再生できません。音声設定を確認してください。';}
+        }
+        function speakText(text){
+            var cleanText=String(text||'').replace(/\s+/g,' ').trim();
+            if(!cleanText)return;
+            if(window.KotobaSharedSFX && window.KotobaSharedSFX.voiceLevel()<=0){stopSpeech();var muted=document.getElementById('voice-status');if(muted)muted.textContent='音声読み上げは設定でオフになっています。';return;}
+            stopSpeech();
+            var gen=speechGeneration;
+            var status=document.getElementById('voice-status');
+            if(window.AndroidSpeech&&typeof window.AndroidSpeech.speak==='function'){
+                try{window.AndroidSpeech.speak(cleanText);if(status)status.textContent='読み上げています…';return;}catch(e){}
+            }
+            if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){
+                if(status)status.textContent='このブラウザーでは音声読み上げを利用できません。';
+                return;
+            }
+            speechQueue=splitSpeech(cleanText);
+            if(status)status.textContent='音声を準備しています…';
+            readSpeechChunk(gen);
+        }
+
+        function switchTab(tab){
+            stopSpeech();
+            var storySec=document.getElementById('story-section'), quizSec=document.getElementById('quiz-section'), resultSec=document.getElementById('result-section');
+            var storyBtn=document.getElementById('tab-story-btn'), quizBtn=document.getElementById('tab-quiz-btn');
+            if(tab==='story'){
+                storySec.classList.remove('hidden'); quizSec.classList.add('hidden'); resultSec.classList.add('hidden');
+                storyBtn.className='px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-600 bg-amber-500 text-white shadow-md btn-active';
+                quizBtn.className='px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-300 bg-white text-amber-800 shadow-md btn-active';
+            }else{
+                storySec.classList.add('hidden'); quizSec.classList.remove('hidden'); resultSec.classList.add('hidden');
+                quizBtn.className='px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-600 bg-amber-500 text-white shadow-md btn-active';
+                storyBtn.className='px-4 py-2 text-lg sm:text-xl font-bold rounded-xl border-2 border-amber-300 bg-white text-amber-800 shadow-md btn-active';
+                loadQuestion();
+            }
+        }
+
+        function renderStory(){
+            document.getElementById('story-page-title').textContent = currentStory.title;
+            document.getElementById('story-title-label').textContent = currentStory.title;
+            var body=document.getElementById('story-body'); body.innerHTML='';
+            currentStory.story.forEach(function(t,i){
+                var d=document.createElement('div'); d.className='p-3 rounded-xl hover:bg-amber-50 transition-colors';
+                d.textContent=t; body.appendChild(d);
+                if(i<currentStory.story.length-1){ var hr=document.createElement('hr'); hr.className='border-t-2 border-dashed border-amber-100'; body.appendChild(hr); }
+            });
+            var review=document.getElementById('story-review'); review.innerHTML='';
+            currentStory.review.forEach(function(t){ var p=document.createElement('p'); p.textContent=t; review.appendChild(p); });
+        }
+
+        function resetQuizScroll(){
+            if(document.activeElement && typeof document.activeElement.blur==='function') try{document.activeElement.blur();}catch(e){}
+            var root=document.documentElement, body=document.body;
+            var old=root.style.scrollBehavior;
+            root.style.scrollBehavior='auto';
+            try{window.scrollTo({top:0,left:0,behavior:'instant'});}catch(e){try{window.scrollTo(0,0);}catch(ignored){}}
+            root.scrollTop=0; if(body) body.scrollTop=0;
+            root.style.scrollBehavior=old;
+        }
+
+        function loadQuestion(){
+            if(currentQuestionIndex<0) currentQuestionIndex=0;
+            if(currentQuestionIndex>=quizData.length){ showResults(); return; }
+            if(!quizLearningStarted && currentQuestionIndex===0){
+                quizLearningStarted=true;
+                quizStartedAt=Date.now();
+                if(window.KotobaUnifiedLearning) window.KotobaUnifiedLearning.begin('genres','朗読・記憶トレーニング',readingActivityId);
+            }
+            answered=false;
+            var q=quizData[currentQuestionIndex];
+            document.getElementById('current-q-num').innerText=currentQuestionIndex+1;
+            document.getElementById('q-number-label').innerText=currentQuestionIndex+1;
+            document.getElementById('quiz-question').innerText=q.q;
+            document.getElementById('progress-bar').style.width=((currentQuestionIndex+1)/quizData.length*100)+'%';
+            document.getElementById('options-container').classList.remove('hidden');
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('next-btn').disabled=false;
+            document.getElementById('next-btn').classList.remove('opacity-50','pointer-events-none');
+            resetQuizScroll();
+            speakText('問題 '+(currentQuestionIndex+1)+'。'+q.q);
+        }
+
+        function handleAnswer(userAnswer){
+            if(answered) return;
+            if(currentQuestionIndex<0 || currentQuestionIndex>=quizData.length) return;
+            answered=true;
+            stopSpeech();
+            var currentQ=quizData[currentQuestionIndex];
+            var isCorrect=(userAnswer===currentQ.a);
+            if(isCorrect) score++;
+            if(window.KotobaUnifiedLearning) window.KotobaUnifiedLearning.recordAnswer('genres',{
+                id:'reading-memory-'+STORY_ID+'-'+String(currentQ.q||''),
+                prompt:currentQ.q, answer:String(currentQ.a), choices:['〇','×'],
+                difficultyLevel:currentQ.difficultyLevel || 1
+            },isCorrect);
+            quizHistory.push({index:currentQuestionIndex+1, q:currentQ.q, user:userAnswer?'〇（ただしい）':'✕（ちがう）', correct:currentQ.a?'〇（ただしい）':'✕（ちがう）', isCorrect:isCorrect, exp:currentQ.exp});
+            document.getElementById('options-container').classList.add('hidden');
+            var feedbackArea=document.getElementById('feedback-area');
+            document.getElementById('feedback-icon').innerHTML=isCorrect?'✓':'✕';
+            document.getElementById('feedback-title').innerText=isCorrect?'せいかい！':'ざんねん...';
+            document.getElementById('feedback-explanation').innerText=currentQ.exp;
+            feedbackArea.className='p-6 rounded-2xl border-4 pop-in space-y-4 '+(isCorrect?'bg-emerald-50 border-emerald-400 text-emerald-900':'bg-rose-50 border-rose-400 text-rose-900');
+            feedbackArea.classList.remove('hidden');
+            document.getElementById('next-btn').disabled=false;
+            playSound(isCorrect);
+            speakText(isCorrect?'正解です。できました。'+currentQ.exp:'残念です。'+currentQ.exp);
+        }
+
+        function nextQuestion(){
+            if(!answered) return;
+            if(currentQuestionIndex>=quizData.length) return;
+            stopSpeech();
+            currentQuestionIndex++;
+            if(currentQuestionIndex<quizData.length) loadQuestion(); else showResults();
+        }
+
+        function showResults(){
+            if(quizResultSaved) return;
+            quizResultSaved=true;
+            stopSpeech();
+            document.getElementById('quiz-section').classList.add('hidden');
+            var resultSection=document.getElementById('result-section');
+            resultSection.classList.remove('hidden');
+            var recordsButton=document.getElementById('training-records-btn');
+            if(recordsButton){recordsButton.classList.remove('hidden');recordsButton.hidden=false;recordsButton.style.setProperty('display','flex','important');recordsButton.style.setProperty('visibility','visible','important');recordsButton.style.setProperty('opacity','1','important');}
+            document.getElementById('score-display').innerText=score;
+            document.getElementById('result-total').innerText=quizData.length;
+            var comment=document.getElementById('score-comment');
+            if(score===quizData.length) comment.innerText='すばらしい！ 全問正解です！ おはなしを しっかり 覚えていましたね。';
+            else if(score>=3) comment.innerText='とても よく できました！ もう一度 おはなしを 読めば、さらに覚えられます。';
+            else comment.innerText='がんばりましたね！ もう一度 おはなしを 読んで、またチャレンジしてみましょう。';
+            if (window.KotobaDailyStreak) window.KotobaDailyStreak.finish('readingDailyStreak');
+            var rr=document.getElementById('result-review'); rr.innerHTML='<h3 class="text-xl font-black text-amber-900">振り返り</h3>';
+            quizHistory.forEach(function(item){
+                var d=document.createElement('div');
+                d.className='p-3 rounded-xl border '+(item.isCorrect?'border-emerald-200 bg-emerald-50':'border-rose-200 bg-rose-50');
+                d.innerHTML='<div class="font-black">第'+item.index+'問　'+(item.isCorrect?'正解':'不正解')+'</div><div class="mt-1 font-bold">'+escapeHtml(item.q)+'</div><div class="mt-1 text-sm">あなた：'+escapeHtml(item.user)+'／正解：'+escapeHtml(item.correct)+'</div><div class="mt-1 text-sm">'+escapeHtml(item.exp)+'</div>';
+                rr.appendChild(d);
+            });
+            var adaptiveSummary=null;
+            if(window.KotobaUnifiedLearning && quizLearningStarted) adaptiveSummary=window.KotobaUnifiedLearning.finish('genres',{
+                genre:'朗読・記憶トレーニング', activity:readingActivityId,
+                score:score,total:quizData.length
+            });
+            try{
+                var key='aphasiaTrainingRecordsV4'; var records=JSON.parse(localStorage.getItem(key)||'[]');
+                if(!Array.isArray(records)) records=[];
+                var end=new Date(),start=new Date(quizStartedAt||end.getTime());
+                var profile=window.KotobaQuestUserProfile?window.KotobaQuestUserProfile.getCurrent():{};
+                var levels=window.KotobaLevels?window.KotobaLevels.finish(readingActivityId,Math.round(score/quizData.length*100),true,quizData.length):null;
+                var entry={id:String(end.getTime())+'-'+Math.random().toString(36).slice(2,8),date:end.getFullYear()+'-'+String(end.getMonth()+1).padStart(2,'0')+'-'+String(end.getDate()).padStart(2,'0'),time:end.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),startedAt:start.toISOString(),finishedAt:end.toISOString(),durationSec:Math.max(0,Math.round((end-start)/1000)),category:'朗読・想起クイズ',genre:'認知・理解トレーニング',activity:currentStory.title,score:score,total:quizData.length,rate:Math.round(score/quizData.length*100),kind:'training',turns:0,activityId:readingActivityId,difficultyLevel:levels?levels.level:1,masteryBefore:levels?levels.before:0,masteryAfter:levels?levels.points:0,userProfileId:profile.profileId||'unconfigured',userName:profile.displayName||'名前未登録',userCode:profile.recordCode||''};
+                if(adaptiveSummary) entry.adaptive=adaptiveSummary;
+                records.push(entry);localStorage.setItem(key,JSON.stringify(records));
+            }catch(e){console.warn('朗読・想起クイズの記録を保存できませんでした。',e);}
+            speakText('お疲れさまでした。'+quizData.length+'問中 '+score+'問 正解です。');
+            // 結果の先頭へ移動し、緑色の記録ボタンが見える位置から表示します。
+            resetQuizScroll();
+            setTimeout(resetQuizScroll, 80);
+        }
+
+        function restartQuiz(){ currentQuestionIndex=0; score=0; quizHistory=[]; quizStartedAt=null; quizLearningStarted=false; quizResultSaved=false; switchTab('quiz'); }
+        function speakCurrentQuestion(){ if(currentQuestionIndex<quizData.length) speakText('問題 '+(currentQuestionIndex+1)+'。'+quizData[currentQuestionIndex].q); }
+        function escapeHtml(s){ return String(s||'').replace(/[&<>\"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+        function playSound(isCorrect){
+            // 共有音量設定を守り、音声読み上げをかき消さない短い音を使う。
+            if(window.KotobaSharedSFX)window.KotobaSharedSFX.play(isCorrect?'correct':'wrong');
+        }
+
+        function returnToKotobaQuest(){
+            stopSpeech();
+            try{ if(window.AndroidApp && typeof window.AndroidApp.returnToMain==='function'){ window.AndroidApp.returnToMain(); return; } }catch(e){}
+            try{  window.location.replace('index.html?v=86#title'); }catch(e){ window.location.href='index.html?v=86#title'; }
+        }
+
+        function openTrainingRecords(){
+            stopSpeech();
+            try{ if(window.AndroidApp && typeof window.AndroidApp.openRecords==='function'){ window.AndroidApp.openRecords(); return; } }catch(e){}
+            try{  window.location.replace('index.html?v=86#records'); }catch(e){ window.location.href='index.html?v=86#records'; }
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            renderStory();
+            // 初期表示は必ず「おはなし」から。課題を切り替えても問題番号が残らない。
+            currentQuestionIndex=0; score=0; quizHistory=[];
+            switchTab('story');
+        });
+
+        window.addEventListener('pagehide', stopSpeech);
+        window.addEventListener('beforeunload', stopSpeech);
+        document.addEventListener('visibilitychange', function(){ if(document.hidden) stopSpeech(); });
+        window.__readingMemoryStandalone=true;
+</script>
+</body>
+</html>

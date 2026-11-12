@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#203e3a">
+  <title>猫のことばパズル・なぞってコンボ｜ことばクエスト</title>
+  <style>
+    :root{font-family:system-ui,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:#213b37;background:#e6f0e9;--forest:#244b43;--gold:#f3cd7e;--cream:#fffaf0}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(circle at 85% 0,#d8efe0,#eaf2e9 55%,#dae9df)}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible{outline:4px solid #edb540;outline-offset:3px}button:disabled{opacity:.48;cursor:not-allowed}
+    header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#193f37;color:#fff9de;padding:12px clamp(12px,3vw,30px);box-shadow:0 6px 22px #1637292a}
+    header h1{font-size:clamp(18px,2.6vw,26px);margin:0}header small{display:block;color:#c5e7da;font-size:11px;letter-spacing:.05em}header .buttons{display:flex;flex-wrap:wrap;gap:8px}header button,.utility{border:1px solid #d9eadb;background:#fff9e8;color:#22423c;border-radius:14px;font-weight:800;padding:10px 13px}header button:hover,.utility:hover{background:#f4e7bd}
+    .layout{display:grid;grid-template-columns:minmax(285px,.9fr) minmax(335px,1.1fr);max-width:1380px;min-height:calc(100dvh - 73px);margin:auto;gap:clamp(12px,2.2vw,28px);padding:clamp(12px,2.2vw,28px)}
+    .cat-card{position:relative;align-self:start;height:min(620px,calc(100dvh - 132px));min-height:480px;border-radius:28px;overflow:hidden;background:linear-gradient(#96c9c5 0%,#c9e9c9 66%,#8aaf75);box-shadow:0 12px 35px #234c3833;border:2px solid #ffffffa0}
+    #catStage{position:absolute;inset:0;overflow:hidden}#catStage canvas{width:100%;height:100%;display:block}#catFallback{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:12px;color:#24483c;text-align:center;padding:20px}#catFallback[hidden]{display:none}#catFallback .big{font-size:94px;filter:drop-shadow(0 12px 9px #345f5940)}#catFallback p{max-width:320px;font-size:13px;background:#ffffffc7;padding:12px;border-radius:12px}
+    .cat-bubble{position:absolute;left:14px;bottom:38px;right:14px;z-index:1;pointer-events:none;color:#163c35;font-weight:900;text-align:center;background:#fffcf0e6;border:2px solid #fff;border-radius:18px;padding:13px 16px;box-shadow:0 6px 20px #28594538;font-size:clamp(14px,1.8vw,18px)}
+    .credit{position:absolute;bottom:9px;right:11px;color:#0f3329;background:#ffffffab;border-radius:9px;padding:3px 7px;font-size:10px;z-index:1}.credit a{color:inherit}
+    .board{background:var(--cream);border:1px solid #fff;border-radius:28px;box-shadow:0 12px 40px #244b432a;padding:clamp(15px,3vw,30px);align-self:stretch;min-height:480px;position:relative;display:flex;flex-direction:column;gap:13px}
+    .meter{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;color:#31594b;font-size:13px}.meter b{background:#e2f0e5;border-radius:99px;padding:7px 12px}.track{height:8px;border-radius:99px;background:#d9e8d8;overflow:hidden}.track>div{height:100%;width:0;background:linear-gradient(90deg,#70b79b,#e8bc5b);transition:width .45s}
+    .clue{text-align:center;background:#edf6ea;border:1px solid #d6e7d7;border-radius:22px;padding:12px 12px 17px}.clue .emoji{font-size:clamp(33px,4.4vw,51px);display:block}.clue .caption{font-weight:850;color:#54736b;font-size:12px;letter-spacing:.06em}.clue h2{margin:7px auto 3px;max-width:540px;line-height:1.45;font-size:clamp(19px,2.5vw,28px)}.clue p{margin:5px 0 0;color:#517265;font-size:12px}
+    .combo-strip{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;background:linear-gradient(100deg,#e2f1e6,#fff2d0);border:1px solid #e9d4a8;border-radius:14px;padding:8px;font-weight:900;color:#31614a;font-size:13px}
+    .combo-strip b{background:#fff8e3;color:#7b4a1f;padding:5px 12px;border-radius:99px;font-variant-numeric:tabular-nums}.combo-strip b.hot{color:#a84913;background:#ffe0a5;animation:pulse .5s alternate infinite}
+    .current-word{min-height:44px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px;padding:5px 7px;border-radius:14px;background:#e5eee9;font-size:clamp(19px,2.8vw,25px);letter-spacing:.16em;font-weight:1000;color:#245b48;text-align:center}
+    .current-word strong{color:#c07b22}.current-word .empty{color:#89a296}
+    .grid-shell{position:relative;width:min(100%,440px);margin:3px auto 1px;border-radius:22px;border:6px solid #b48b58;background:linear-gradient(#e7d5b3,#caa171);padding:7px;box-shadow:0 8px 0 #816744,0 14px 24px #264d3830;user-select:none;-webkit-user-select:none}
+    .letter-grid{--columns:6;--gap:6px;display:grid;grid-template-columns:repeat(var(--columns),minmax(0,1fr));gap:var(--gap);touch-action:none;position:relative;z-index:3}
+    .grid-tile{aspect-ratio:1;border:2px solid #e9daaa;border-radius:13px;background:linear-gradient(145deg,#fffcef,#f1d995);color:#234c40;font-size:clamp(19px,3.1vw,29px);font-weight:1000;display:grid;place-items:center;box-shadow:0 3px 0 #bd9c59;transition:background .16s,box-shadow .16s,scale .16s;position:relative;cursor:crosshair;padding:0}
+    .grid-tile:nth-child(6n + 3){background:linear-gradient(145deg,#f2fff7,#cfe8cf)}
+    .grid-tile.selected{background:linear-gradient(145deg,#ffe29f,#ffa958);border-color:#f9eeba;box-shadow:0 0 0 3px #e88d25b0,0 3px 0 #c46d28;color:#542f0f;scale:1.055;z-index:3}
+    .grid-tile.hint{outline:4px solid #e1a22f;outline-offset:-5px;animation:hintGlow .75s infinite alternate}.grid-tile.wrong{background:#ffd1c5!important;border-color:#ce6150}
+    .grid-tile.clearing{animation:popOut .43s forwards}.grid-tile.falling{animation:tileDrop .53s cubic-bezier(.17,.71,.26,1.07) backwards;animation-delay:var(--fall-delay,0ms)}
+    .connections{position:absolute;inset:7px;width:calc(100% - 14px);height:calc(100% - 14px);pointer-events:none;z-index:2;overflow:visible}
+    .gesture-help{font-size:12px;font-weight:750;color:#557263;text-align:center;margin:1px 0 0}.burst{position:absolute;top:42%;left:50%;z-index:6;transform:translate(-50%,-50%);pointer-events:none;font-size:clamp(21px,4vw,34px);font-weight:1000;color:#f9a326;text-shadow:0 3px 1px #60381a,0 0 16px #fff;opacity:0}.burst.show{animation:burst .8s ease-out forwards}
+    @keyframes pulse{to{transform:scale(1.08)}}@keyframes hintGlow{to{filter:brightness(1.14)}}@keyframes popOut{to{opacity:0;transform:scale(.1) rotate(15deg)}}@keyframes tileDrop{from{transform:translateY(calc(-1 * var(--fall) * 58px));opacity:.75}to{transform:translateY(0);opacity:1}}@keyframes burst{0%{opacity:0;transform:translate(-50%,-10%) scale(.7)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-140%) scale(1.45)}}
+    .actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:auto}.primary{border:0;border-radius:15px;background:var(--forest);color:#fff;padding:12px 19px;font-size:15px;font-weight:900;box-shadow:0 4px 0 #14302b}.primary:hover{background:#396c59}.utility{font-size:14px}#message{min-height:52px;padding:11px 14px;border-radius:15px;background:#edf3ea;font-weight:780;line-height:1.5;color:#35604e;text-align:center}#message.correct{background:#d6f5df;color:#175a38}#message.incorrect{background:#fff0e9;color:#8b4231}
+    .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:#102d2ab6;padding:16px;backdrop-filter:blur(5px)}.overlay[hidden]{display:none}.dialog{width:min(570px,100%);max-height:90dvh;overflow:auto;background:#fffaf0;color:#2a473d;border:3px solid #f1d7a0;border-radius:28px;box-shadow:0 18px 70px #0c241d90;padding:clamp(17px,4vw,34px);text-align:center}.dialog h2{font-size:clamp(24px,4vw,36px);margin:10px 0 4px}.dialog p{line-height:1.7}.dialog .cat-emoji{font-size:58px}.dialog .field{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px auto}.dialog select{background:#eaf1e6;color:#243e37;border-radius:12px;border:1px solid #afc6b9;padding:10px;font-weight:900}.dialog .row{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:14px}.dialog .row button{min-height:45px}
+    #review{display:grid;gap:8px;text-align:left;max-height:33vh;overflow:auto}.review-item{background:#ecf3e9;border-radius:12px;padding:10px 13px}.review-item strong,.review-item span{display:block}.review-item span{font-size:13px;margin-top:4px;line-height:1.5}.stat{font-size:36px;font-weight:1000;color:#2d7454}#gameError{position:fixed;bottom:8px;left:8px;font-size:12px;color:#245b48;z-index:3}
+    @media(max-width:760px){header{align-items:flex-start}header .buttons button{font-size:12px;padding:8px 9px}.layout{display:flex;flex-direction:column;min-height:0;gap:10px;padding:10px}.cat-card{order:0;height:clamp(174px,24vh,235px);min-height:174px;align-self:stretch}.cat-bubble{bottom:24px;font-size:13px;padding:7px 11px}.board{order:1;min-height:0;padding:13px;gap:8px}.clue{padding:7px 9px 11px}.clue .emoji{font-size:30px}.grid-tile{font-size:clamp(20px,5.2vw,28px);border-radius:10px}.grid-shell{border-width:5px;padding:5px}.connections{inset:5px;width:calc(100% - 10px);height:calc(100% - 10px)}.credit{font-size:8px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition:none!important}}
+  </style>
+  <link rel="stylesheet" href="styles/games/cat-word-puzzle-mobile-r2.css?v=veta31">
+  <script src="scripts/audio/kotoba-audio-common-r5.js?v=r5"></script>
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+  <header><div><small>KOTOBA QUEST · なぞってコンボ！</small><h1>🐾 猫のことばパズル</h1></div><div class="buttons"><button type="button" id="speakBtn">🔊 読み上げ</button><button type="button" id="settingsBtn">⚙ 設定</button><button type="button" id="returnBtn">← 戻る</button></div></header>
+  <main class="layout" id="gameRoot">
+    <section class="cat-card" aria-label="白黒猫が応援する3Dガーデン"><div id="catStage"><div id="catFallback"><span class="big" aria-hidden="true">🐈‍⬛</span><p>猫がことばパズルを応援しています。</p></div></div><div id="catBubble" class="cat-bubble" aria-live="polite">いっしょに、ことばを完成させよう！</div><div class="credit">3D cat: <a href="https://sketchfab.com/3d-models/bicolor-cat-e623a618ca344a8393d7ba4d63ec23cf" target="_blank" rel="noopener">kenchoo</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div></section>
+    <section class="board" aria-label="ことばパズルの問題">
+      <div class="meter"><b id="levelBadge">Lv.1</b><span id="questionCounter">1 / 5 問</span><b id="scoreBadge">⭐ 0 正解</b></div><div class="track" aria-label="進行状況"><div id="progressFill"></div></div>
+      <div class="combo-strip"><span id="pointsBadge">🏆 0 pt</span><b id="comboBadge">コンボ 0</b><span id="mistakeBadge">まちがい 0/3</span></div>
+      <div class="clue"><span class="emoji" id="clueEmoji" aria-hidden="true">🐈</span><span class="caption">問題を読んで、文字をつなごう</span><h2 id="clueText">問題を準備しています…</h2><p id="clueCount">たて・よこに隣り合う文字をなぞります</p></div>
+      <div id="currentWord" class="current-word" aria-label="いま作っている言葉">？ ？</div>
+      <div id="gridShell" class="grid-shell"><div id="letterGrid" class="letter-grid" role="group" aria-label="文字をなぞるパズル盤"></div><svg id="connections" class="connections" aria-hidden="true"></svg><div id="burst" class="burst" aria-hidden="true">コンボ！</div></div>
+      <p class="gesture-help">☝️ 指でなぞる／文字を一つずつタップする、どちらでもOK！</p>
+      <div id="message" role="status" aria-live="polite">たて・よこに隣り合う文字をつないでください。</div>
+      <div class="actions"><button id="undoBtn" class="utility" type="button">↶ 1文字戻す</button><button id="clearBtn" class="utility" type="button">✕ やり直す</button><button id="shuffleBtn" class="utility" type="button">🔀 盤面を変える</button><button id="hintBtn" class="primary" type="button">💡 ヒント</button></div>
+    </section>
+  </main>
+  <div id="startOverlay" class="overlay"><div class="dialog"><div class="cat-emoji">🐈‍⬛🧩</div><h2>なぞって！ 猫のことばパズル</h2><p>文字を指でつなげて言葉を完成させよう！<br>正解した文字が消えて、上から新しい文字が落ちてくるよ。<br>連続正解で<strong>コンボボーナス</strong>！</p><button id="startBtn" class="primary" type="button">🐾 タップしてスタート</button><p><small>時間制限なし・タップ操作にも対応・誤答3回で次の問題へ</small></p></div></div>
+  <div id="settingsOverlay" class="overlay" hidden><div class="dialog"><h2>⚙ パズルの設定</h2><p>難易度と問題数を選んで、もう一度挑戦できます。</p><div class="field"><label for="levelSelect">難易度</label><select id="levelSelect"></select></div><div class="field"><label for="countSelect">問題数</label><select id="countSelect"><option value="5">5問</option><option value="10">10問</option><option value="15">15問</option><option value="20">20問</option></select></div><div class="row"><button id="applySettings" class="primary" type="button">この内容で始める</button><button id="cancelSettings" class="utility" type="button">キャンセル</button></div></div></div>
+  <div id="resultOverlay" class="overlay" hidden><div class="dialog"><div class="cat-emoji">🐈‍⬛✨</div><h2>パズルの結果</h2><div class="stat" id="resultScore">0 / 5</div><p id="resultReward">メダルの結果</p><p id="masteryResult">熟練度の結果</p><h3>問題ごとの復習</h3><div id="review"></div><div class="row"><button id="retryBtn" class="primary" type="button">もう一度遊ぶ</button><button id="resultBackBtn" class="utility" type="button">3Dゲーム一覧へ</button></div></div></div>
+  <div id="gameError" role="status"></div>
+  <script src="scripts/system/daily-streak.js?v=108"></script>
+  <script src="scripts/audio/audio-mixer-v86.js?v=veta31"></script>
+  <script src="scripts/audio/kotoba-sound-design-v19.js?v=veta31"></script>
+  <script src="scripts/audio/kotoba-sound-pack-v2.js?v=veta31"></script>
+  <script src="scripts/system/user-profile.js?v=veta17-id"></script>
+  <script src="scripts/learning/learning-mode-veta12.js?v=veta17-on"></script>
+  <script src="scripts/learning/adaptive-learning.js?v=veta12"></script>
+  <script src="scripts/learning/unified-learning-veta1.js?v=veta12"></script>
+  <script src="scripts/learning/difficulty-veta11.js?v=veta14-level-lock"></script>
+  <script src="scripts/games/cat-word-puzzle-integration.js?v=veta31"></script>
+  <script src="vendor/three/three-classic-pc.js"></script>
+  <script src="vendor/three/gltf-loader-classic-pc.js"></script>
+  <script src="scripts/3d/pc-models-inline.js"></script>
+  <script src="scripts/3d/cat-word-puzzle-3d-classic-pc.js"></script>
+  <script src="scripts/games/cat-word-puzzle.js?v=veta31-r8"></script>
+  <script src="scripts/3d/pc-3d-guide.js"></script>
+</body>
+</html>

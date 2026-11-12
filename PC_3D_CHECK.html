@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#207b53">
+<title>ことばクエスト PC版｜3D動作診断</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px 12px;background:#eaf5ed;font-family:system-ui,'Yu Gothic',sans-serif;color:#204335}
+main{margin:0 auto;max-width:720px;background:white;border-radius:24px;padding:25px;box-shadow:0 8px 24px #2043351c}
+h1{color:#207b53;margin:0 0 10px;font-size:clamp(23px,5vw,32px)}
+p{line-height:1.65}ol{padding-left:25px}li{padding:8px 0;line-height:1.5}
+.pass{color:#137942}.fail{color:#b14231}.pending{color:#6b665b}
+.note{background:#f5fae8;border:1px solid #c3d79e;padding:14px;border-radius:14px}
+a{color:#187442}button{font:inherit;font-weight:800;padding:12px 18px;border:0;border-radius:12px;background:#287e53;color:white;cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eff6ef;border-radius:10px;padding:12px;font-size:12px}
+</style>
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+<main>
+<h1>🔎 3Dゲームの動作診断</h1>
+<p>ピクトグラム・猫・しばバーガーの3Dが動かないとき、ブラウザとモデルの読み込み状態を確認できます。</p>
+<ol>
+ <li id="step1" class="pending">起動方法の確認中…</li>
+ <li id="step2" class="pending">WebGL 2を確認中…</li>
+ <li id="step3" class="pending">3D描画エンジンを確認中…</li>
+ <li id="step4" class="pending">柴犬・猫の3Dモデルを確認中…</li>
+</ol>
+<p id="answer" class="note" role="status" aria-live="polite">診断中です。少しお待ちください。</p>
+<div class="actions"><button onclick="location.reload()">もう一度確認する</button><button id="copy" type="button">結果をコピー</button><a href="START_HERE.html" style="padding:11px">← ゲーム選択へ戻る</a></div>
+<pre id="log"></pre>
+</main>
+<script src="scripts/3d/pc-3d-guide.js"></script>
+<script src="vendor/three/three-classic-pc.js"></script>
+<script src="vendor/three/gltf-loader-classic-pc.js"></script>
+<script src="scripts/3d/pc-models-inline.js"></script>
+<script>
+(async()=>{
+const log=[];
+const status=(id,ok,msg)=>{const el=document.getElementById(id);el.className=ok?'pass':'fail';el.textContent=(ok?'✅ ':'❌ ')+msg;log.push(el.textContent);document.getElementById('log').textContent=log.join('\n')};
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(log.join('\n'));alert('診断結果をコピーしました')}catch{prompt('診断結果',log.join('\n'))}};
+let supported=true;
+const localOK=location.protocol==='file:'||location.protocol==='http:'||location.protocol==='https:';
+status('step1',localOK,location.protocol==='file:'?'PC用オフライン版：HTML直接起動に対応しています':localOK?'ブラウザから起動しています':'未対応の起動方式です');
+if(!localOK)supported=false;
+let gl=null;
+try{const probe=document.createElement('canvas');gl=probe.getContext('webgl2');}catch{}
+status('step2',!!gl,gl?'WebGL 2が利用できます':'WebGL 2が利用できません。ブラウザのグラフィックアクセラレーション設定を確認してください');
+if(!gl)supported=false;
+try{
+  const THREE=window.THREE;
+  if(!THREE?.WebGLRenderer)throw Error('3Dエンジンが読み込めません。ZIPを完全に展開してください');
+  const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'low-power'});
+  renderer.setSize(8,8,false);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x3b875a);
+  const camera=new THREE.PerspectiveCamera(45,1,.1,100);camera.position.z=2;
+  renderer.render(scene,camera);renderer.dispose();
+  status('step3',true,'Three.jsの3D描画に成功しました');
+}catch(error){supported=false;status('step3',false,'Three.jsの起動に失敗: '+error.message)}
+try{
+  const GLTFLoader=window.KQGLTFLoader;
+  if(!GLTFLoader)throw Error('PC用モデルローダーが見つかりません');
+  const loader=new GLTFLoader();
+  const models=await Promise.all([loader.loadAsync('shiba-inu.glb'),loader.loadAsync('tuxedo-cat.glb')]);
+  if(models.every(m=>m.scene&&m.scene.children.length>0))status('step4',true,'柴犬と猫の3Dモデルを正常に読み込みました');
+  else throw Error('モデルに表示要素がありません');
+}catch(error){supported=false;status('step4',false,'モデルの読み込みに失敗: '+error.message)}
+document.getElementById('answer').textContent=supported?'すべての診断に合格しました。HTMLを直接開いた場合も3Dゲームを使用できます。':'問題が見つかりました。ZIPをすべて展開したか確認してください。WebGL 2が使えない場合はChrome/Edgeのグラフィックアクセラレーション設定とドライバーを確認してください。';
+})();
+</script>
+</body>
+</html>

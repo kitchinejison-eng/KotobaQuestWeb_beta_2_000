@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1d5576">
+  <title>神経衰弱｜ことばクエスト</title>
+  <link rel="stylesheet" href="styles/games/card-game-veta20.css?v=23">
+  <link rel="stylesheet" href="styles/ui/daily-streak.css?v=23">
+<!-- 【開発者向け】JSとCSSは用途別に scripts/・styles/ に整理されています。
+     <script>の順番を変えると画面初期化・学習記録・3Dに影響します。docs/スクリプト読込順.md を参照してください。 -->
+</head>
+<body>
+  <main class="cg-shell">
+    <header class="cg-header">
+      <a class="cg-back" href="index.html#home">← ジャンル選択</a>
+      <div class="cg-brand">ことばクエスト <span>VETA23</span></div>
+    </header>
+
+    <section id="cgSetup" class="cg-panel cg-setup" aria-labelledby="cgTitle">
+      <p class="cg-eyebrow">🧩 記憶力を使ってCPUと対戦！</p>
+      <h1 id="cgTitle">神経衰弱</h1>
+      <p class="cg-lead">プレイヤーとCPUが交互に2枚のカードをめくり、同じ絵をそろえた数で勝負します。ペアがそろったら、もう一度同じ人の番になります。</p>
+      <div class="cg-options">
+        <label>ペア数<select id="cgCount"><option value="5">5ペア</option><option value="10">10ペア</option><option value="15">15ペア</option><option value="20">20ペア</option></select></label>
+        <label>難易度<select id="cgLevel" aria-label="挑戦する難易度"></select></label>
+      </div>
+      <p class="cg-help" id="cgModeDescription">CPUはめくったカードを記憶し、Lv.1〜Lv.10で記憶力が変わります。まだ見えていないカードの裏側をCPUがのぞくことはありません。画面には5ペアずつ表示します。</p>
+      <button type="button" class="cg-primary" id="cgStart">▶ CPU対戦をはじめる</button>
+      <p class="cg-footnote">※ 発音や認知機能の医学的な診断・評価ではありません。結果は端末内のトレーニング記録に保存されます。</p>
+    </section>
+
+    <section id="cgPlay" class="cg-panel" hidden aria-labelledby="cgPlayTitle">
+      <div class="cg-game-head"><h1 id="cgPlayTitle">神経衰弱｜CPU対戦</h1><span id="cgCounter" class="cg-counter">0 / 5</span></div>
+      <div class="cg-battle" aria-label="対戦スコア">
+        <div class="cg-fighter cg-fighter-player" id="cgPlayerPanel"><span>🙂 あなた</span><strong id="cgPlayerScore">0</strong><small>獲得ペア</small></div>
+        <div class="cg-versus">VS</div>
+        <div class="cg-fighter cg-fighter-cpu" id="cgCpuPanel"><span>🤖 CPU</span><strong id="cgCpuScore">0</strong><small>獲得ペア</small></div>
+      </div>
+      <div id="cgCombo" class="cg-combo" aria-live="polite" hidden></div>
+      <p class="cg-turn" id="cgTurn" role="status" aria-live="polite">あなたの番です</p>
+      <div class="cg-track" aria-hidden="true"><div id="cgProgress"></div></div>
+      <div id="cgQuestion" class="cg-question" aria-live="polite"></div>
+      <div id="cgCards" class="cg-cards" role="group" aria-label="選択するカード"></div>
+      <div id="cgMatchBurst" class="cg-match-burst" aria-hidden="true" hidden></div>
+      <div id="cgFeedback" class="cg-feedback" role="status" aria-live="polite" hidden></div>
+      <div class="cg-actions"><button type="button" id="cgQuit" class="cg-quiet">ゲームをやめる</button></div>
+    </section>
+
+    <section id="cgResult" class="cg-panel cg-result-panel" hidden aria-labelledby="cgResultTitle">
+      <p class="cg-eyebrow cg-result-eyebrow">トレーニング結果</p>
+      <div class="cg-complete" id="cgResultIcon" aria-hidden="true">🏆</div>
+      <h2 class="cg-result-heading">おつかれさまでした</h2>
+      <h1 id="cgResultTitle">チャレンジ完了！</h1>
+      <div id="cgDailyStreak" class="daily-streak-slot"></div>
+      <p id="cgResultScore" class="cg-result-score"></p>
+      <p id="cgResultRate" class="cg-result-rate"></p>
+      <p id="cgResultMessage" class="cg-result-message"></p>
+      <p id="cgReward" class="cg-reward"></p>
+      <section id="cgMasteryPanel" class="cg-mastery-panel" aria-label="熟練度の結果" hidden>
+        <strong id="cgMasteryTitle"></strong><span id="cgMasteryValue"></span>
+        <div class="cg-mastery-track"><div id="cgMasteryBar"></div></div>
+        <p id="cgMastery"></p>
+      </section>
+      <h2 class="cg-review-heading">問題ごとの結果・解説・復習ポイント</h2>
+      <div id="cgResultItems" class="cg-result-items"></div>
+      <div class="cg-result-buttons"><button type="button" id="cgReplay" class="cg-primary">もう一度挑戦</button><a class="cg-secondary cg-link" href="index.html#home">ジャンル選択へ</a><a class="cg-secondary cg-link" href="index.html#records">記録を見る</a></div>
+    </section>
+  </main>
+  <script src="scripts/audio/audio-mixer-v86.js?v=91"></script>
+  <script src="scripts/audio/kotoba-sound-pack-v2.js?v=22"></script>
+  <script src="scripts/audio/kotoba-sound-design-v19.js?v=23"></script>
+  <script src="scripts/system/daily-streak.js?v=108"></script>
+  <script src="scripts/system/user-profile.js?v=veta17-id"></script>
+  <script src="scripts/learning/learning-mode-veta12.js?v=veta17-on"></script>
+  <script src="scripts/learning/adaptive-learning.js?v=veta12"></script>
+  <script src="scripts/learning/unified-learning-veta1.js?v=veta12"></script>
+  <script src="scripts/learning/difficulty-veta11.js?v=veta14-level-lock"></script>
+  <script src="scripts/games/card-game-core-veta20.js?v=21"></script>
+  <script src="scripts/games/card-game-veta20.js?v=23"></script>
+</body>
+</html>
